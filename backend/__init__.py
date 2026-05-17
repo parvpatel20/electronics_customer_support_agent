@@ -1,0 +1,2 @@
+"""TechCart AI backend package."""
+

@@ -1,0 +1,10 @@
+[project]
+name = "techcart-ai"
+version = "1.0.0"
+description = "TechCart AI electronics support multi-agent system"
+requires-python = ">=3.11,<3.14"
+dependencies = []
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
