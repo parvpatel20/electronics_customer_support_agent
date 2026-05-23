@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import logo from './assets/techcart-logo.png';
 import CustomerChat from './pages/CustomerChat.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import LoginPage from './components/LoginPage.jsx';
@@ -33,19 +34,14 @@ export default function App() {
   return (
     <main className="grid-texture min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
       {/* ─── Top Navigation ─── */}
-      <nav className="glass sticky top-0 z-50" style={{ borderTop: 'none', borderLeft: 'none', borderRight: 'none' }}>
+      <nav className="glass nav-gradient-bottom sticky top-0 z-50" style={{ borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: 'none' }}>
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-3">
           <button
             onClick={() => navigate(customer ? '/chat' : '/')}
             className="flex items-center gap-3 group"
             style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-lg"
-              style={{ background: 'linear-gradient(135deg, var(--color-tech-orange), #ea580c)' }}
-            >
-              <span className="text-white text-lg font-black">T</span>
-            </div>
+            <img src={logo} alt="TechCart" style={{ height: '38px', width: '38px', objectFit: 'contain', flexShrink: 0 }} />
             <div>
               <p className="font-display text-lg font-bold" style={{ color: 'var(--color-text-primary)', lineHeight: 1.2 }}>
                 TechCart AI
@@ -58,10 +54,12 @@ export default function App() {
 
           <div className="flex items-center gap-3">
             {customer && (
-              <div className="hidden sm:flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border-default)' }}>
-                <div className="h-2 w-2 rounded-full" style={{ background: '#22c55e' }} />
+              <div className="hidden sm:flex items-center gap-2 rounded-xl px-3 py-1.5" style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border-default)' }}>
+                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-tech-orange), #ea580c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem', fontWeight: 800, color: 'white', flexShrink: 0 }}>
+                  {customer.name?.[0]?.toUpperCase()}
+                </div>
                 <span style={{ color: 'var(--color-text-primary)', fontWeight: 600, fontSize: '0.8125rem' }}>{customer.name}</span>
-                <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>{customer.customer_id}</span>
+                <span style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem', paddingLeft: '2px', borderLeft: '1px solid var(--color-border-default)' }}>{customer.customer_id}</span>
               </div>
             )}
 

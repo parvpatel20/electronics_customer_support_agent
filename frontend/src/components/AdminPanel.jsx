@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { API_BASE } from '../api.js';
 
+function scoreColor(val) {
+  if (!val || val === '—') return {};
+  const n = parseFloat(val);
+  if (n >= 0.8) return { color: '#4ade80', fontWeight: 600 };
+  if (n >= 0.5) return { color: '#fbbf24', fontWeight: 600 };
+  return { color: '#f87171', fontWeight: 600 };
+}
+
 function PendingApproval({ approval, adminPassword, onDone }) {
   const [acting, setActing] = useState(false);
   const [result, setResult] = useState('');
@@ -138,10 +146,10 @@ export default function AdminPanel() {
         {metrics && (
           <>
             <div className="mt-6 grid gap-4 md:grid-cols-4">
-              <Metric label="Routing Accuracy" value={Number(metrics.evaluation.avg_routing_accuracy || 0).toFixed(2)} />
-              <Metric label="Response Quality" value={Number(metrics.evaluation.avg_response_quality || 0).toFixed(2)} />
-              <Metric label="Conversations" value={metrics.totals.conversations_this_week || 0} />
-              <Metric label="Weekly Cost" value={`$${Number(metrics.usage.estimated_cost_usd || 0).toFixed(4)}`} />
+              <Metric label="Routing Accuracy" value={Number(metrics.evaluation.avg_routing_accuracy || 0).toFixed(2)} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" x2="21" y1="20" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" x2="21" y1="15" y2="21"/><line x1="4" x2="9" y1="4" y2="9"/></svg>} />
+              <Metric label="Response Quality" value={Number(metrics.evaluation.avg_response_quality || 0).toFixed(2)} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>} />
+              <Metric label="Conversations" value={metrics.totals.conversations_this_week || 0} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>} />
+              <Metric label="Weekly Cost" value={`$${Number(metrics.usage.estimated_cost_usd || 0).toFixed(4)}`} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" x2="12" y1="1" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} />
             </div>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -158,16 +166,19 @@ export default function AdminPanel() {
                   </thead>
                   <tbody>
                     {metrics.recent_conversations.map((row) => (
-                      <tr key={row.conversation_id} style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+                      <tr key={row.conversation_id} style={{ borderBottom: '1px solid var(--color-border-subtle)', transition: 'background 150ms ease' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-2)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
                         <td className="px-4 py-3" style={{ color: 'var(--color-tech-orange)', fontWeight: 600, fontSize: '0.8125rem' }}>
                           {row.conversation_id.slice(0, 18)}…
                         </td>
                         <td className="px-4 py-3" style={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem', textTransform: 'capitalize' }}>
                           {row.triage_result || 'pending'}
                         </td>
-                        <td className="px-4 py-3" style={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}>{row.routing_accuracy_score || '—'}</td>
-                        <td className="px-4 py-3" style={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}>{row.tool_precision_score || '—'}</td>
-                        <td className="px-4 py-3" style={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}>{row.response_quality_score || '—'}</td>
+                        <td className="px-4 py-3" style={{ ...scoreColor(row.routing_accuracy_score), fontSize: '0.8125rem' }}>{row.routing_accuracy_score || '—'}</td>
+                        <td className="px-4 py-3" style={{ ...scoreColor(row.tool_precision_score), fontSize: '0.8125rem' }}>{row.tool_precision_score || '—'}</td>
+                        <td className="px-4 py-3" style={{ ...scoreColor(row.response_quality_score), fontSize: '0.8125rem' }}>{row.response_quality_score || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -175,7 +186,7 @@ export default function AdminPanel() {
               </div>
 
               <aside className="space-y-4">
-                <div className="rounded-xl p-5" style={{ background: 'linear-gradient(135deg, #1e3a5f, #1e293b)', border: '1px solid var(--color-border-default)' }}>
+                <div className="rounded-xl p-5" style={{ background: 'linear-gradient(135deg, var(--color-tech-navy), #1e293b)', border: '1px solid var(--color-border-default)' }}>
                   <h2 className="font-display text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>Phoenix Traces</h2>
                   <p style={{ color: 'var(--color-text-secondary)', marginTop: '6px', fontSize: '0.8125rem', lineHeight: 1.5 }}>
                     Trace UI for observability and debugging.
@@ -225,13 +236,16 @@ export default function AdminPanel() {
   );
 }
 
-function Metric({ label, value }) {
+function Metric({ label, value, icon }) {
   return (
     <div className="rounded-xl p-5" style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border-default)' }}>
-      <p style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>
-        {label}
-      </p>
-      <p className="font-display gradient-text" style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '8px' }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
+        <p style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>
+          {label}
+        </p>
+        {icon && <span style={{ color: 'var(--color-text-muted)', opacity: 0.6 }}>{icon}</span>}
+      </div>
+      <p className="font-display gradient-text" style={{ fontSize: '1.75rem', fontWeight: 800 }}>
         {value}
       </p>
     </div>

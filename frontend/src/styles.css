@@ -15,11 +15,12 @@
   --color-tech-orange: #f97316;
   --color-tech-orange-light: #fb923c;
   --color-tech-orange-glow: rgba(249, 115, 22, 0.15);
+  --color-tech-teal: #2dd4bf;
+  --color-tech-teal-glow: rgba(45, 212, 191, 0.12);
+  --color-tech-navy: #162558;
   --color-tech-blue: #3b82f6;
   --color-tech-blue-light: #60a5fa;
   --color-tech-ink: #06090f;
-  --color-tech-sky: #dbeafe;
-  --color-tech-lime: #a3e635;
 
   /* Text */
   --color-text-primary: #f1f5f9;
@@ -28,8 +29,8 @@
   --color-text-muted: #475569;
 
   /* Borders */
-  --color-border-subtle: rgba(148, 163, 184, 0.08);
-  --color-border-default: rgba(148, 163, 184, 0.12);
+  --color-border-subtle: rgba(148, 163, 184, 0.06);
+  --color-border-default: rgba(148, 163, 184, 0.10);
   --color-border-hover: rgba(148, 163, 184, 0.2);
 }
 
@@ -80,18 +81,19 @@
 
 /* ─── Glassmorphism ─── */
 .glass {
-  background: rgba(17, 24, 39, 0.6);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  background: rgba(10, 15, 26, 0.88);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
   border: 1px solid var(--color-border-subtle);
 }
 
 .glass-card {
-  background: rgba(17, 24, 39, 0.75);
-  backdrop-filter: blur(12px) saturate(1.2);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
   border: 1px solid var(--color-border-default);
-  border-radius: 16px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
 }
 
 /* ─── Animations ─── */
@@ -154,6 +156,16 @@
   50% { opacity: 1; }
 }
 
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.93); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 .stagger-in {
   animation: fadeInUp 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -169,6 +181,9 @@
 .fade-in {
   animation: fadeIn 400ms ease both;
 }
+
+.scale-in { animation: scaleIn 300ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.float { animation: float 3.5s ease-in-out infinite; }
 
 /* ─── Typing indicator ─── */
 .typing-indicator {
@@ -195,6 +210,7 @@
 
 .typing-indicator span:nth-child(3) {
   animation-delay: 0.4s;
+  background: var(--color-tech-teal);
 }
 
 /* ─── Shimmer loading ─── */
@@ -221,7 +237,8 @@
   font-size: 0.875rem;
   cursor: pointer;
   border: none;
-  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.01em;
 }
 
 .hitl-btn:hover {
@@ -230,7 +247,7 @@
 }
 
 .hitl-btn:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.97);
 }
 
 .hitl-btn-approve {
@@ -260,9 +277,10 @@
 
 /* ─── Message bubbles ─── */
 .msg-user {
-  background: linear-gradient(135deg, var(--color-tech-orange), #ea580c);
+  background: linear-gradient(135deg, var(--color-tech-orange), #dc4e06);
   color: white;
   border-radius: 20px 20px 4px 20px;
+  box-shadow: 0 3px 14px rgba(249, 115, 22, 0.22);
 }
 
 .msg-assistant {
@@ -270,6 +288,16 @@
   border: 1px solid var(--color-border-default);
   color: var(--color-text-primary);
   border-radius: 20px 20px 20px 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+}
+
+/* ─── Chat composer focus state ─── */
+.chat-composer {
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.chat-composer:focus-within {
+  border-color: rgba(249, 115, 22, 0.38) !important;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.07), 0 4px 16px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* ─── Sidebar ─── */
@@ -306,7 +334,7 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.4), rgba(59, 130, 246, 0.2));
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.4), rgba(45, 212, 191, 0.25));
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   -webkit-mask-composite: xor;
@@ -354,11 +382,12 @@
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(249, 115, 22, 0.3);
+  box-shadow: 0 8px 28px rgba(249, 115, 22, 0.32);
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
 }
 
 .btn-primary:disabled {
@@ -385,4 +414,60 @@
   background: var(--color-surface-3);
   border-color: var(--color-border-hover);
   color: var(--color-text-primary);
+}
+
+.btn-ghost:active {
+  transform: scale(0.97);
+}
+
+/* ─── Nav gradient bottom border ─── */
+.nav-gradient-bottom {
+  position: relative;
+}
+
+.nav-gradient-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(249, 115, 22, 0.55) 25%,
+    rgba(45, 212, 191, 0.45) 75%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* ─── Teal gradient text ─── */
+.gradient-text-teal {
+  background: linear-gradient(135deg, var(--color-tech-teal), #5eead4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Feature badge pill ─── */
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ─── Score color classes ─── */
+.score-good { color: #4ade80; font-weight: 600; }
+.score-mid  { color: #fbbf24; font-weight: 600; }
+.score-bad  { color: #f87171; font-weight: 600; }
+
+/* ─── Scrollbar teal hover ─── */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(45, 212, 191, 0.22);
 }

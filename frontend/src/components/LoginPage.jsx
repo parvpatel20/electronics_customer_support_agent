@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { apiJson } from '../api.js';
+import logo from '../assets/techcart-logo.png';
 
 const demoCustomers = [
   { name: 'Priya', id: 'CUST-IN-001', note: 'Router, paid order', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> },
@@ -51,36 +52,42 @@ export default function LoginPage({ onLogin }) {
           className="glass-card gradient-border"
           style={{ padding: '40px', textAlign: 'center' }}
         >
-          <div
-            className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
-            style={{ background: 'var(--color-tech-orange-glow)', border: '1px solid rgba(249, 115, 22, 0.2)' }}
-          >
-            <span style={{ color: 'var(--color-tech-orange)', display: 'flex' }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </span>
-          </div>
+          <img src={logo} alt="TechCart" className="mx-auto mb-4" style={{ height: '96px', objectFit: 'contain' }} />
 
           <p
             style={{
               fontSize: '0.75rem',
               fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: 'var(--color-tech-orange)',
-              marginBottom: '12px',
+              letterSpacing: '0.1em',
+              color: 'var(--color-tech-teal)',
+              marginBottom: '10px',
             }}
           >
-            Authenticated Support Portal
+            AI-Powered Electronics Support
           </p>
           <h1
             className="font-display"
             style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-text-primary)', lineHeight: 1.2 }}
           >
-            Sign in to get help
+            Get help instantly
           </h1>
           <p style={{ color: 'var(--color-text-secondary)', marginTop: '12px', fontSize: '0.9375rem', lineHeight: 1.6, maxWidth: '480px', margin: '12px auto 0' }}>
-            Your identity is verified before chat starts. Every lookup stays scoped to your account.
+            Intelligent support for orders, billing, returns, and troubleshooting — all in one thread, scoped to your account.
           </p>
+
+          <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: '20px' }}>
+            {[
+              { label: 'Orders & Shipping', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> },
+              { label: 'Billing & Refunds', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> },
+              { label: 'Returns & RMA', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> },
+              { label: 'Technical Support', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> },
+            ].map((f) => (
+              <span key={f.label} className="badge-pill" style={{ background: 'var(--color-surface-3)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border-default)' }}>
+                {f.icon} {f.label}
+              </span>
+            ))}
+          </div>
 
           <form
             className="mx-auto"
@@ -145,6 +152,9 @@ export default function LoginPage({ onLogin }) {
                 'Continue →'
               )}
             </button>
+            <p style={{ marginTop: '16px', fontSize: '0.6875rem', color: 'var(--color-text-muted)', letterSpacing: '0.02em' }}>
+              Multi-agent AI · Secure & private · Instant responses
+            </p>
           </form>
 
           {/* ─── Demo Accounts ─── */}
@@ -172,7 +182,16 @@ export default function LoginPage({ onLogin }) {
                   onClick={() => setIdentifier(c.id)}
                   type="button"
                 >
-                  <span style={{ fontSize: '1.3rem', flexShrink: 0 }}>{c.icon}</span>
+                  <div
+                    style={{
+                      width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+                      background: `linear-gradient(135deg, var(--color-tech-orange), #ea580c)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '0.8125rem', fontWeight: 700, color: 'white',
+                    }}
+                  >
+                    {c.name[0]}
+                  </div>
                   <div>
                     <p style={{ fontWeight: 700, fontSize: '0.8125rem', color: 'var(--color-text-primary)' }}>{c.name}</p>
                     <p style={{ fontSize: '0.6875rem', color: 'var(--color-tech-orange)', fontWeight: 600 }}>{c.id}</p>

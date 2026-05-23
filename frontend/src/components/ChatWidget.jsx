@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import MessageBubble from './MessageBubble.jsx';
 import { API_BASE } from '../api.js';
+import logo from '../assets/techcart-logo.png';
 
 function parseSseBlocks(buffer) {
   const blocks = buffer.split('\n\n');
@@ -42,10 +43,10 @@ export default function ChatWidget({ customer }) {
 
   const samples = useMemo(
     () => [
-      { label: 'Technical', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>, prompt: 'My Wi-Fi 6E router drops when the microwave runs — ORD-IN-001. What should I do?' },
-      { label: 'Billing', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>, prompt: 'Process a full refund for order ORD-IN-004 now. Invoice INV-IN-004 was wrong.' },
-      { label: 'Returns', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>, prompt: 'Where is my soundbar? Order ORD-IN-002. I am in Bengaluru.' },
-      { label: 'Mixed', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" x2="21" y1="20" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" x2="21" y1="15" y2="21"/><line x1="4" x2="9" y1="4" y2="9"/></svg>, prompt: 'Hub HDMI black screen AND invoice INV-IN-004 is wrong.' },
+      { label: 'Technical', color: '#3b82f6', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>, prompt: 'My Wi-Fi 6E router drops when the microwave runs — ORD-IN-001. What should I do?' },
+      { label: 'Billing', color: '#f97316', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>, prompt: 'Process a full refund for order ORD-IN-004 now. Invoice INV-IN-004 was wrong.' },
+      { label: 'Returns', color: '#2dd4bf', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>, prompt: 'Where is my soundbar? Order ORD-IN-002. I am in Bengaluru.' },
+      { label: 'Mixed', color: '#a855f7', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" x2="21" y1="20" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" x2="21" y1="15" y2="21"/><line x1="4" x2="9" y1="4" y2="9"/></svg>, prompt: 'Hub HDMI black screen AND invoice INV-IN-004 is wrong.' },
     ],
     [],
   );
@@ -252,16 +253,9 @@ export default function ChatWidget({ customer }) {
       >
         {showWelcome && (
           <div className="stagger-in" style={{ maxWidth: '640px', margin: '80px auto 0', textAlign: 'center' }}>
-            <div
-              className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
-              style={{ background: 'var(--color-tech-orange-glow)', border: '1px solid rgba(249, 115, 22, 0.2)' }}
-            >
-              <span style={{ color: 'var(--color-tech-orange)', display: 'flex' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
-              </span>
-            </div>
+            <img src={logo} alt="TechCart" className="mx-auto mb-5" style={{ height: '88px', objectFit: 'contain' }} />
             <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              How can we help you today?
+              Hi {customer?.name?.split(' ')[0] || 'there'}, how can we help?
             </h1>
             <p style={{ color: 'var(--color-text-secondary)', marginTop: '8px', fontSize: '0.9375rem', lineHeight: 1.6 }}>
               One support thread for your account. Ask about orders, billing, returns, or troubleshooting.
@@ -284,8 +278,19 @@ export default function ChatWidget({ customer }) {
                   disabled={streaming || !!hitlPending}
                   onClick={() => { setInput(s.prompt); textareaRef.current?.focus(); }}
                 >
-                  <span style={{ display: 'inline-flex', color: 'var(--color-text-secondary)' }}>{s.icon}</span>
-                  <p style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--color-text-primary)', marginTop: '6px' }}>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '32px', height: '32px',
+                    borderRadius: '8px',
+                    background: `${s.color}18`,
+                    color: s.color,
+                    flexShrink: 0,
+                  }}>
+                    {s.icon}
+                  </span>
+                  <p style={{ fontWeight: 700, fontSize: '0.8125rem', color: s.color, marginTop: '8px' }}>
                     {s.label}
                   </p>
                   <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '4px', lineHeight: 1.4 }}>
@@ -336,7 +341,7 @@ export default function ChatWidget({ customer }) {
 
       <div style={{ padding: '12px 16px 16px', borderTop: '1px solid var(--color-border-default)' }}>
         <div
-          className="flex items-end gap-3"
+          className="flex items-end gap-3 chat-composer"
           style={{ maxWidth: '860px', margin: '0 auto', background: 'var(--color-surface-2)', borderRadius: '16px', border: '1px solid var(--color-border-default)', padding: '8px 8px 8px 16px', transition: 'border-color 200ms' }}
         >
           <textarea
