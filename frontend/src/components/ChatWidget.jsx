@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import MessageBubble from './MessageBubble.jsx';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import { API_BASE } from '../api.js';
 
 function parseSseBlocks(buffer) {
   const blocks = buffer.split('\n\n');
@@ -36,10 +35,10 @@ export default function ChatWidget({ customer }) {
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState('');
   const [hitlPending, setHitlPending] = useState(null);
-  const [hitlLoading, setHitlLoading] = useState(false);
   const [supportLoaded, setSupportLoaded] = useState(false);
   const viewportRef = useRef(null);
   const textareaRef = useRef(null);
+  const pendingAgentRef = useRef('triage');
 
   const samples = useMemo(
     () => [
@@ -79,6 +78,24 @@ export default function ChatWidget({ customer }) {
   }, [customer?.customer_id]);
 
   useEffect(() => {
+    if (!hitlPending || !customer?.customer_id) return;
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/customers/${customer.customer_id}/support`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.hitl_pending) {
+          setMessages(mapStoredMessages(data.messages));
+          setHitlPending(null);
+        }
+      } catch {
+        // ignore
+      }
+    }, 5000);
+    return () => clearInterval(poll);
+  }, [hitlPending, customer?.customer_id]);
+
+  useEffect(() => {
     viewportRef.current?.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, streaming, hitlPending]);
 
@@ -96,7 +113,7 @@ export default function ChatWidget({ customer }) {
   function handleKeyDown(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      if (!streaming && !hitlLoading && input.trim() && !hitlPending) {
+      if (!streaming && input.trim() && !hitlPending) {
         sendMessage();
       }
     }
@@ -111,10 +128,10 @@ export default function ChatWidget({ customer }) {
     setStreaming(true);
 
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    pendingAgentRef.current = 'triage';
     setMessages((current) => [
       ...current,
       { role: 'user', content: text, timestamp: now },
-      { role: 'assistant', content: '', agentName: 'triage', timestamp: now },
     ]);
 
     let response;
@@ -127,14 +144,14 @@ export default function ChatWidget({ customer }) {
     } catch {
       setStreaming(false);
       setError('Cannot reach the support backend. Please check your connection and try again.');
-      setMessages((current) => current.slice(0, -2));
+      setMessages((current) => current.slice(0, -1));
       return;
     }
 
     if (!response.ok || !response.body) {
       setStreaming(false);
       setError(`Request failed with HTTP ${response.status}. Please try again.`);
-      setMessages((current) => current.slice(0, -2));
+      setMessages((current) => current.slice(0, -1));
       return;
     }
 
@@ -154,23 +171,31 @@ export default function ChatWidget({ customer }) {
         const parsed = parseSseBlock(block);
 
         if (parsed.event === 'agent_name') {
+          const name = parsed.data.agent_name;
+          pendingAgentRef.current = name;
           setMessages((current) => {
-            const copy = [...current];
-            copy[copy.length - 1] = { ...copy[copy.length - 1], agentName: parsed.data.agent_name };
-            return copy;
+            const last = current[current.length - 1];
+            if (last?.role === 'assistant') {
+              const copy = [...current];
+              copy[copy.length - 1] = { ...last, agentName: name };
+              return copy;
+            }
+            return current;
           });
         }
 
         if (parsed.event === 'content') {
+          const agentName = parsed.data.agent_name || pendingAgentRef.current;
+          const chunk = parsed.data.content || '';
           setMessages((current) => {
-            const copy = [...current];
-            const last = copy[copy.length - 1];
-            copy[copy.length - 1] = {
-              ...last,
-              agentName: parsed.data.agent_name || last.agentName,
-              content: `${last.content}${parsed.data.content}`,
-            };
-            return copy;
+            const last = current[current.length - 1];
+            if (last?.role === 'assistant') {
+              const copy = [...current];
+              copy[copy.length - 1] = { ...last, agentName, content: `${last.content}${chunk}` };
+              return copy;
+            }
+            const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return [...current, { role: 'assistant', content: chunk, agentName, timestamp: ts }];
           });
         }
 
@@ -201,80 +226,22 @@ export default function ChatWidget({ customer }) {
     }
   }
 
-  async function handleHitlDecision(decision) {
-    if (hitlLoading) return;
-    setHitlLoading(true);
-    setError('');
-
-    setMessages((current) => {
-      const copy = [...current];
-      const last = copy[copy.length - 1];
-      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      if (last?.role === 'assistant' && !String(last.content || '').trim()) {
-        copy[copy.length - 1] = { ...last, agentName: 'billing', timestamp: now };
-        return copy;
-      }
-      return [...copy, { role: 'assistant', content: '', agentName: 'billing', timestamp: now }];
-    });
-
-    try {
-      const response = await fetch(`${API_BASE}/chat/approve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_id: customer.customer_id,
-          decision,
-        }),
-      });
-
-      if (!response.ok || !response.body) {
-        setError('Failed to process approval. Please try again.');
-        setMessages((current) => current.slice(0, -1));
-        setHitlLoading(false);
-        return;
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const [blocks, rest] = parseSseBlocks(buffer);
-        buffer = rest;
-
-        for (const block of blocks) {
-          const parsed = parseSseBlock(block);
-          if (parsed.event === 'content') {
-            setMessages((current) => {
-              const copy = [...current];
-              const last = copy[copy.length - 1];
-              copy[copy.length - 1] = {
-                ...last,
-                agentName: parsed.data.agent_name || last.agentName,
-                content: `${last.content}${parsed.data.content}`,
-              };
-              return copy;
-            });
-          }
-          if (parsed.event === 'error') {
-            setError(parsed.data.message || 'An error occurred during approval.');
-          }
-        }
-      }
-
-      setHitlPending(null);
-    } catch {
-      setError('Network error during approval. Please try again.');
-      setMessages((current) => current.slice(0, -1));
-    } finally {
-      setHitlLoading(false);
-    }
-  }
-
   const showWelcome = supportLoaded && messages.length === 0 && !streaming;
+
+  if (!supportLoaded && customer?.customer_id) {
+    return (
+      <div className="flex flex-col flex-1 items-center justify-center fade-in" style={{ minHeight: 0 }}>
+        <div className="typing-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <p style={{ color: 'var(--color-text-muted)', marginTop: '16px', fontSize: '0.875rem' }}>
+          Loading your support thread…
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1 fade-in" style={{ minHeight: 0 }}>
@@ -337,32 +304,20 @@ export default function ChatWidget({ customer }) {
         {hitlPending && (
           <div className="stagger-in" style={{ maxWidth: '480px', margin: '16px 0', padding: '20px', borderRadius: '16px', background: 'var(--color-surface-2)', border: '1px solid rgba(249, 115, 22, 0.35)' }}>
             <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              Approval required
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Pending support team approval
             </p>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: '16px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: '12px', lineHeight: 1.5 }}>
               {hitlPending.description}
             </p>
-            <div className="flex gap-3">
-              <button
-                className="hitl-btn hitl-btn-approve"
-                disabled={hitlLoading}
-                onClick={() => handleHitlDecision('approve')}
-              >
-                {hitlLoading ? 'Processing…' : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Approve</>}
-              </button>
-              <button
-                className="hitl-btn hitl-btn-reject"
-                disabled={hitlLoading}
-                onClick={() => handleHitlDecision('reject')}
-              >
-                {hitlLoading ? 'Processing…' : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Reject</>}
-              </button>
-            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b', animation: 'pulse 1.5s ease-in-out infinite' }} />
+              Waiting for our support team to review. You'll see the result here automatically.
+            </p>
           </div>
         )}
 
-        {streaming && (
+        {streaming && messages[messages.length - 1]?.role !== 'assistant' && (
           <div style={{ margin: '12px 0' }}>
             <div className="typing-indicator stagger-in">
               <span></span>
@@ -402,7 +357,7 @@ export default function ChatWidget({ customer }) {
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={hitlPending ? 'Use the buttons above to approve or reject…' : 'Type your message...'}
-            disabled={streaming || hitlLoading || !!hitlPending}
+            disabled={streaming || !!hitlPending}
             rows={1}
           />
           <button
@@ -416,7 +371,7 @@ export default function ChatWidget({ customer }) {
               color: input.trim() && !streaming && !hitlPending ? 'white' : 'var(--color-text-muted)',
               flexShrink: 0,
             }}
-            disabled={streaming || hitlLoading || !input.trim() || !!hitlPending}
+            disabled={streaming || !input.trim() || !!hitlPending}
             onClick={sendMessage}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

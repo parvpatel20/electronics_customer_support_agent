@@ -3,10 +3,41 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    image: techcart-ai-backend:latest
     env_file:
       - path: .env
         required: false
+    environment:
+      ENV: ${ENV:-dev}
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/data
+      - ./data:/app/data:ro
+      - checkpoints:/app/checkpoints
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  frontend:
+    image: node:20-slim
+    profiles: ["frontend"]
+    working_dir: /app
+    command: sh -c "npm install --silent && npm run dev -- --host 0.0.0.0 --port 5173"
+    environment:
+      VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8000}
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  frontend_node_modules: {}
+  checkpoints: {}

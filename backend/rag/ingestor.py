@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from pathlib import Path
 
@@ -9,6 +10,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from backend.config import settings
 from backend.rag.common import get_vector_store
+
+logger = logging.getLogger(__name__)
 
 
 def _load_file(path: Path) -> list[Document]:
@@ -49,8 +52,26 @@ def ingest_documents_from_directory(directory: Path, namespace: str | None = Non
     total = 0
     for start in range(0, len(chunks), 10):
         batch = chunks[start : start + 10]
-        vector_store.add_documents(batch)
-        total += len(batch)
+        for attempt in range(3):
+            try:
+                vector_store.add_documents(batch)
+                total += len(batch)
+                break
+            except Exception as exc:
+                if attempt == 2:
+                    logger.warning(
+                        "Skipping batch starting at %d after 3 attempts: %s", start, exc
+                    )
+                else:
+                    sleep_s = 2 ** attempt
+                    logger.warning(
+                        "Batch ingest at %d failed (attempt %d/3): %s — retrying in %ss",
+                        start,
+                        attempt + 1,
+                        exc,
+                        sleep_s,
+                    )
+                    time.sleep(sleep_s)
         time.sleep(1)
     return total
 

@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,6 +16,8 @@ class Settings(BaseSettings):
     PINECONE_API_KEY: str = ""
 
     ENV: Literal["dev", "prod"] = "dev"
+    LOG_LEVEL: str = "INFO"
+
     PINECONE_INDEX_NAME: str = "techcart-support"
     PINECONE_NAMESPACE_DEV: str = "dev"
     PINECONE_NAMESPACE_PROD: str = "prod"
@@ -23,7 +27,7 @@ class Settings(BaseSettings):
     MYSQL_HOST: str = "localhost"
     MYSQL_PORT: int = 3306
     MYSQL_USER: str = "techcart"
-    MYSQL_PASSWORD: str = "techcart_password"
+    MYSQL_PASSWORD: str = ""
     MYSQL_DATABASE: str = "techcart"
     MYSQL_SSL_VERIFY_CERT: bool = False
     MYSQL_SSL_VERIFY_IDENTITY: bool = False
@@ -44,7 +48,9 @@ class Settings(BaseSettings):
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
     CORS_ORIGINS: str = "http://localhost:5173"
-    ADMIN_PASSWORD: str = "change-me"
+    ADMIN_PASSWORD: str = ""
+
+    CHECKPOINT_DB_PATH: str = "/app/checkpoints/langgraph.db"
 
     CHAT_CONTEXT_MESSAGE_LIMIT: int = 8
     CHAT_STORED_MESSAGE_LIMIT: int = 20
@@ -54,6 +60,14 @@ class Settings(BaseSettings):
     AGENT_MESSAGE_LIMIT: int = 12
 
     PRODUCT_MANUALS_DIR: Path = Field(default=Path("data/product_manuals"))
+
+    @field_validator("LOG_LEVEL")
+    @classmethod
+    def _normalize_log_level(cls, value: str) -> str:
+        candidate = (value or "INFO").upper()
+        if candidate not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+            return "INFO"
+        return candidate
 
     @property
     def pinecone_namespace(self) -> str:
@@ -66,6 +80,10 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
+    @property
+    def has_pinecone(self) -> bool:
+        return bool(self.PINECONE_API_KEY and self.HF_TOKEN)
 
 
 @lru_cache

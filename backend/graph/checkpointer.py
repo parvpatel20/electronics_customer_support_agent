@@ -200,6 +200,43 @@ class AsyncShallowPyMySQLSaver(BaseCheckpointSaver):
             await asyncio.to_thread(self._saver.delete_thread, thread_id)
 
 
+class _AsyncSqliteWrapper(BaseCheckpointSaver):
+    """Wrap sync SqliteSaver so LangGraph async APIs work via asyncio.to_thread."""
+
+    def __init__(self, saver) -> None:
+        super().__init__(serde=saver.serde)
+        self._saver = saver
+
+    def setup(self) -> None:
+        self._saver.setup()
+
+    def get_tuple(self, config: RunnableConfig) -> CheckpointTuple | None:
+        return self._saver.get_tuple(config)
+
+    async def aget_tuple(self, config: RunnableConfig) -> CheckpointTuple | None:
+        return await asyncio.to_thread(self._saver.get_tuple, config)
+
+    def put(self, config: RunnableConfig, checkpoint: Checkpoint, metadata: CheckpointMetadata, new_versions: ChannelVersions) -> RunnableConfig:
+        return self._saver.put(config, checkpoint, metadata, new_versions)
+
+    async def aput(self, config: RunnableConfig, checkpoint: Checkpoint, metadata: CheckpointMetadata, new_versions: ChannelVersions) -> RunnableConfig:
+        return await asyncio.to_thread(self._saver.put, config, checkpoint, metadata, new_versions)
+
+    def put_writes(self, config: RunnableConfig, writes: Sequence[tuple[str, Any]], task_id: str, task_path: str = "") -> None:
+        self._saver.put_writes(config, writes, task_id, task_path)
+
+    async def aput_writes(self, config: RunnableConfig, writes: Sequence[tuple[str, Any]], task_id: str, task_path: str = "") -> None:
+        await asyncio.to_thread(self._saver.put_writes, config, writes, task_id, task_path)
+
+    def list(self, config: RunnableConfig | None, *, filter: dict[str, Any] | None = None, before: RunnableConfig | None = None, limit: int | None = None) -> Iterator[CheckpointTuple]:
+        yield from self._saver.list(config, filter=filter, before=before, limit=limit)
+
+    async def alist(self, config: RunnableConfig | None, *, filter: dict[str, Any] | None = None, before: RunnableConfig | None = None, limit: int | None = None) -> AsyncIterator[CheckpointTuple]:
+        items = await asyncio.to_thread(lambda: list(self._saver.list(config, filter=filter, before=before, limit=limit)))
+        for item in items:
+            yield item
+
+
 def _probe_mysql_checkpointer(saver) -> bool:
     """Return False when TiDB cannot run ShallowPyMySQLSaver read queries (e.g. JSON_TABLE)."""
     try:
@@ -211,26 +248,22 @@ def _probe_mysql_checkpointer(saver) -> bool:
 
 
 def _build_checkpointer():
+    import os
     from langgraph.checkpoint.memory import InMemorySaver
 
     try:
-        from langgraph.checkpoint.mysql.pymysql import ShallowPyMySQLSaver
+        from langgraph.checkpoint.sqlite import SqliteSaver
 
-        conn = _mysql_checkpointer_connection()
-        if _legacy_py_mysql_checkpoint_schema(conn):
-            _reset_checkpoint_tables(conn)
-
-        _setup_tidb_shallow_checkpoint_tables(conn)
-        sync_saver = ShallowPyMySQLSaver(conn)
-        if not _probe_mysql_checkpointer(sync_saver):
-            logger.warning("Using InMemorySaver for graph checkpoints (TiDB read probe failed).")
-            return InMemorySaver()
-
-        checkpointer = AsyncShallowPyMySQLSaver(sync_saver)
-        logger.info("Using AsyncShallowPyMySQLSaver checkpointer for persistent graph state.")
+        db_path = settings.CHECKPOINT_DB_PATH
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        conn = __import__("sqlite3").connect(db_path, check_same_thread=False)
+        saver = SqliteSaver(conn)
+        saver.setup()
+        checkpointer = _AsyncSqliteWrapper(saver)
+        logger.info("Using SQLite checkpointer at %s.", db_path)
         return checkpointer
     except Exception as exc:
-        logger.warning("Failed to initialize MySQL checkpointer (%s), falling back to InMemorySaver.", exc)
+        logger.warning("Failed to initialize SQLite checkpointer (%s), falling back to InMemorySaver.", exc)
         return InMemorySaver()
 
 

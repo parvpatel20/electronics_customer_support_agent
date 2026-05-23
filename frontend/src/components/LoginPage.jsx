@@ -1,6 +1,5 @@
 import { useState } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import { apiJson } from '../api.js';
 
 const demoCustomers = [
   { name: 'Priya', id: 'CUST-IN-001', note: 'Router, paid order', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> },
@@ -22,19 +21,14 @@ export default function LoginPage({ onLogin }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
+      const data = await apiJson('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: value }),
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError(data.detail || 'Could not sign in with that customer.');
-        return;
-      }
       onLogin(data.customer);
-    } catch {
-      setError('Cannot reach the backend. Please make sure the API is running.');
+    } catch (err) {
+      setError(err?.message || 'Cannot reach the backend. Please make sure the API is running.');
     } finally {
       setLoading(false);
     }

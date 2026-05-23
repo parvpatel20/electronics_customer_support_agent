@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
 from backend.config import settings
 from backend.db.mysql_client import execute_query, fetch_all
@@ -64,13 +64,14 @@ def build_conversation_messages(
     customer_id: str,
     conversation_id: str,
     message: str,
-) -> list[SystemMessage | HumanMessage | AIMessage]:
+) -> list[BaseMessage]:
     history = load_customer_history(customer_id)
-    messages: list[SystemMessage | HumanMessage | AIMessage] = [
+    messages: list[BaseMessage] = [
         SystemMessage(
             content=(
                 f"Authenticated customer_id for this session: {customer_id}\n"
-                "Use this customer_id for every account-scoped tool call unless the customer explicitly authenticates as a different account.\n\n"
+                "Use this customer_id for every account-scoped tool call unless the customer "
+                "explicitly authenticates as a different account.\n\n"
                 f"Relevant customer history:\n{history}"
             )
         )
@@ -99,20 +100,15 @@ def build_turn_messages(
     message: str,
     *,
     continuing_thread: bool,
-) -> list[SystemMessage | HumanMessage | AIMessage]:
+) -> list[BaseMessage]:
     """Pass only the new user turn when the graph checkpoint already has history."""
     if continuing_thread:
         return [HumanMessage(content=message)]
     return build_conversation_messages(customer_id, conversation_id, message)
 
 
-def trim_messages_for_agent(
-    messages: list,
-    limit: int | None = None,
-) -> list:
+def trim_messages_for_agent(messages: list[BaseMessage], limit: int | None = None) -> list[BaseMessage]:
     """Keep system context and the most recent turns to avoid agent tool loops."""
-    from langchain_core.messages import SystemMessage
-
     keep = limit or settings.AGENT_MESSAGE_LIMIT
     if len(messages) <= keep:
         return list(messages)

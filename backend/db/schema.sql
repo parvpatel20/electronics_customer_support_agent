@@ -115,23 +115,3 @@ CREATE TABLE IF NOT EXISTS evaluation_logs (
     INDEX idx_eval_conversation (conversation_id),
     CONSTRAINT fk_eval_conversation FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id)
 );
-
-INSERT IGNORE INTO customers (customer_id, name, email, phone) VALUES
-('CUST-1001', 'Demo Customer', 'demo@techcart.local', '+15555550100');
-
-INSERT IGNORE INTO products (
-    product_sku, product_name, category, dimensions, weight, connectivity, battery, display_specs, warranty_months, warranty_terms
-) VALUES
-('RTX-4090-TC', 'TechCart RTX 4090 Graphics Card', 'GPU', '304 x 137 x 61 mm', '2.1 kg', 'PCIe 4.0, HDMI 2.1, DisplayPort 1.4a', NULL, NULL, 36, 'Covers manufacturing defects. Physical damage is excluded.'),
-('ROUTER-WIFI6E-TC', 'TechCart Wi-Fi 6E Router', 'Networking', '220 x 160 x 45 mm', '680 g', 'Wi-Fi 6E, Ethernet, USB-C 3.2 Gen 2', NULL, NULL, 24, 'Covers firmware and hardware defects under normal use.');
-
-INSERT IGNORE INTO orders (
-    order_id, customer_id, product_name, product_sku, quantity, price, status, tracking_number, carrier
-) VALUES
-('ORD-1001', 'CUST-1001', 'TechCart Wi-Fi 6E Router', 'ROUTER-WIFI6E-TC', 1, 199.99, 'delivered', '1Z999TECHCART', 'UPS');
-
-INSERT IGNORE INTO invoices (
-    invoice_id, order_id, customer_id, amount, currency, status, payment_method
-) VALUES
-('INV-1001', 'ORD-1001', 'CUST-1001', 199.99, 'USD', 'paid', 'Visa ending 4242');
-

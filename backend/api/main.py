@@ -3,20 +3,21 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from uuid import uuid4
+from contextlib import asynccontextmanager
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage
 from langgraph.types import Command
 from pydantic import BaseModel, Field
 
+from backend.api.hitl import hitl_from_graph_state
 from backend.config import settings
-from backend.db.mysql_client import execute_query, fetch_all, fetch_one
+from backend.db.mysql_client import execute_query, fetch_all, fetch_one, ping
 from backend.evaluation.llm_judge import judge_conversation
 from backend.graph.multi_agent_graph import techcart_graph
-from backend.api.hitl import hitl_from_graph_state
+from backend.logging_config import configure_logging
 from backend.memory.conversation import (
     build_turn_messages,
     conversation_id_for_customer,
@@ -25,11 +26,20 @@ from backend.memory.conversation import (
 )
 from backend.observability.phoenix_setup import configure_phoenix
 
+configure_logging()
 logger = logging.getLogger(__name__)
 
-configure_phoenix()
 
-app = FastAPI(title="TechCart AI Support", version="1.0.0")
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    try:
+        configure_phoenix()
+    except Exception as exc:
+        logger.warning("Phoenix tracing initialization failed: %s", exc)
+    yield
+
+
+app = FastAPI(title="TechCart AI Support", version="1.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -54,7 +64,6 @@ class ApprovalRequest(BaseModel):
 
 
 class ChatApprovalRequest(BaseModel):
-    """Customer-facing approval for HITL interrupts (e.g. refund approval)."""
     customer_id: str = Field(min_length=1, max_length=64)
     decision: str = Field(pattern=r"^(approve|reject)$")
     reason: str | None = None
@@ -85,9 +94,7 @@ def _chunk_text(chunk) -> str:
 
 def _format_error(exc: Exception) -> str:
     message = str(exc).strip()
-    if message:
-        return message
-    return f"{type(exc).__name__}: graph execution failed"
+    return message or f"{type(exc).__name__}: graph execution failed"
 
 
 def _graph_config(conversation_id: str) -> dict:
@@ -122,32 +129,49 @@ def _ensure_customer_conversation(customer_id: str) -> str:
 
 
 def _save_message(conversation_id: str, role: str, content: str, agent_name: str | None = None) -> None:
+    query = """
+        INSERT INTO messages (conversation_id, role, content, agent_name)
+        VALUES (%s, %s, %s, %s)
+    """
+    params = (conversation_id, role, content, agent_name)
     try:
-        execute_query(
-            """
-            INSERT INTO messages (conversation_id, role, content, agent_name)
-            VALUES (%s, %s, %s, %s)
-            """,
-            (conversation_id, role, content, agent_name),
-        )
+        execute_query(query, params)
     except Exception as exc:
-        # Retry once on transient connection drop.
+        logger.warning("Initial message save failed (%s); retrying once.", exc)
         try:
-            execute_query(
-                """
-                INSERT INTO messages (conversation_id, role, content, agent_name)
-                VALUES (%s, %s, %s, %s)
-                """,
-                (conversation_id, role, content, agent_name),
-            )
+            execute_query(query, params)
         except Exception:
-            logger.error("Failed to save message after retry: %s", exc)
-    trim_stored_messages(conversation_id)
+            logger.exception("Failed to save message after retry for conversation %s", conversation_id)
+            return
+    try:
+        trim_stored_messages(conversation_id)
+    except Exception as exc:
+        logger.debug("trim_stored_messages failed for %s: %s", conversation_id, exc)
 
 
 def _auth_admin(admin_password: str | None) -> None:
     if settings.ADMIN_PASSWORD and admin_password != settings.ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Invalid admin password")
+
+
+async def _run_judge_background(
+    conversation_id: str,
+    original_message: str,
+    triage_route: str,
+    final_response: str,
+) -> None:
+    resolved_signal = any(word in final_response.lower() for word in ["resolved", "thank", "fixed", "worked"])
+    try:
+        await judge_conversation(
+            conversation_id=conversation_id,
+            original_message=original_message,
+            triage_route=triage_route,
+            tools_called=[],
+            final_response=final_response,
+            resolved_signal=resolved_signal,
+        )
+    except Exception as exc:
+        logger.debug("Evaluation skipped for %s: %s", conversation_id, exc)
 
 
 @app.post("/auth/login")
@@ -166,22 +190,6 @@ async def login(request: LoginRequest) -> dict:
     return {"customer": customer}
 
 
-async def _run_judge_background(conversation_id: str, original_message: str, triage_route: str, final_response: str) -> None:
-    resolved_signal = any(word in final_response.lower() for word in ["resolved", "thank", "fixed", "worked"])
-    try:
-        await judge_conversation(
-            conversation_id=conversation_id,
-            original_message=original_message,
-            triage_route=triage_route,
-            tools_called=[],
-            final_response=final_response,
-            resolved_signal=resolved_signal,
-        )
-    except Exception:
-        # Evaluation must never break the customer response path.
-        return
-
-
 @app.post("/chat")
 async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> StreamingResponse:
     try:
@@ -197,22 +205,16 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> Strea
         )
         _save_message(conversation_id, "user", request.message)
     except Exception as exc:
+        logger.exception("Chat startup failed for customer %s", request.customer_id)
         conversation_id = conversation_id_for_customer(request.customer_id)
-        config = _graph_config(conversation_id)
-        messages = build_turn_messages(
-            request.customer_id,
-            conversation_id,
-            request.message,
-            continuing_thread=False,
-        )
 
         async def startup_error_stream():
-            message = (
+            fallback = (
                 "Support is temporarily having trouble opening your account context. "
                 "Please retry in a moment; your message was not processed yet."
             )
             yield _sse("metadata", {"conversation_id": conversation_id})
-            yield _sse("content", {"agent_name": "supervisor", "content": message})
+            yield _sse("content", {"agent_name": "supervisor", "content": fallback})
             yield _sse("error", {"message": str(exc), "conversation_id": conversation_id})
             yield _sse("done", {"conversation_id": conversation_id, "agent_name": "supervisor"})
 
@@ -244,18 +246,18 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> Strea
                         final_text_parts.append(content)
                         yield _sse("content", {"agent_name": active_agent, "content": content})
 
-                # Tool events are suppressed from SSE — kept internal only.
-                # (No tool_start / tool_end events emitted to the frontend.)
-
                 elif kind == "on_chain_end" and name == "triage_node":
                     output = data.get("output") or {}
                     triage = output.get("triage_result") or {}
                     triage_route = triage.get("route", "unknown")
                     active_agent = triage_route
-                    execute_query(
-                        "UPDATE conversations SET triage_result = %s WHERE conversation_id = %s",
-                        (triage_route, conversation_id),
-                    )
+                    try:
+                        execute_query(
+                            "UPDATE conversations SET triage_result = %s WHERE conversation_id = %s",
+                            (triage_route, conversation_id),
+                        )
+                    except Exception as exc:
+                        logger.debug("Failed to persist triage route: %s", exc)
                     yield _sse("agent_name", {"agent_name": active_agent, "triage": triage})
 
                 elif kind == "on_chain_end" and name in {
@@ -296,23 +298,26 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> Strea
                         "description": hitl["description"],
                         "options": hitl["options"],
                     })
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("HITL state probe failed: %s", exc)
 
             final_text = "".join(final_text_parts).strip()
             if final_text:
                 _save_message(conversation_id, "assistant", final_text, active_agent)
-                background_tasks.add_task(_run_judge_background, conversation_id, request.message, triage_route, final_text)
+                background_tasks.add_task(
+                    _run_judge_background, conversation_id, request.message, triage_route, final_text
+                )
             yield _sse("done", {"conversation_id": conversation_id, "agent_name": active_agent})
         except Exception as exc:
             logger.exception("Chat graph failed for conversation %s", conversation_id)
             raw_error = _format_error(exc)
-            if "rate_limit" in raw_error.lower() or "429" in raw_error:
+            lower = raw_error.lower()
+            if "rate_limit" in lower or "429" in raw_error:
                 fallback = (
                     "Support is temporarily busy processing requests. Please wait a few minutes and retry; "
                     "your account context and message are safe."
                 )
-            elif "GraphRecursionError" in type(exc).__name__ or "recursion limit" in raw_error.lower():
+            elif "graphrecursionerror" in type(exc).__name__.lower() or "recursion limit" in lower:
                 fallback = (
                     "I reached the maximum number of automated billing steps for this message. "
                     "Please send a shorter follow-up (for example: approve the refund, or ask only for eligibility)."
@@ -332,10 +337,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> Strea
 
 @app.post("/chat/approve")
 async def chat_approve(request: ChatApprovalRequest, background_tasks: BackgroundTasks) -> StreamingResponse:
-    """Customer-facing HITL approval endpoint. Resumes an interrupted graph and streams the result."""
     conversation_id = _ensure_customer_conversation(request.customer_id)
     config = _graph_config(conversation_id)
-
     decision = {"type": request.decision}
     if request.reason:
         decision["message"] = request.reason
@@ -351,9 +354,13 @@ async def chat_approve(request: ChatApprovalRequest, background_tasks: Backgroun
             final = next((m.content for m in reversed(messages) if isinstance(m, AIMessage)), "")
             if final:
                 _save_message(conversation_id, "assistant", final, "billing")
+                background_tasks.add_task(
+                    _run_judge_background, conversation_id, f"hitl:{request.decision}", "billing", final
+                )
                 yield _sse("content", {"agent_name": "billing", "content": final})
             yield _sse("done", {"conversation_id": conversation_id, "agent_name": "billing"})
         except Exception as exc:
+            logger.exception("Approval flow failed for conversation %s", conversation_id)
             fallback = "There was an issue processing the approval. Please try again."
             yield _sse("content", {"agent_name": "supervisor", "content": fallback})
             yield _sse("error", {"message": str(exc), "conversation_id": conversation_id})
@@ -372,8 +379,8 @@ async def customer_support(customer_id: str) -> dict:
     try:
         graph_state = await techcart_graph.aget_state(config)
         hitl_pending = hitl_from_graph_state(graph_state)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("HITL state probe failed for %s: %s", conversation_id, exc)
 
     return {
         "conversation_id": conversation_id,
@@ -421,7 +428,31 @@ async def admin_metrics(x_admin_password: str | None = Header(default=None)) -> 
         LIMIT 20
         """
     )
-    return {"totals": totals, "evaluation": evals, "usage": cost, "recent_conversations": recent, "pending_approvals": []}
+    pending_approvals = []
+    for row in (recent or []):
+        conv_id = row.get("conversation_id")
+        if not conv_id:
+            continue
+        try:
+            graph_state = await techcart_graph.aget_state({"configurable": {"thread_id": conv_id}, "recursion_limit": settings.GRAPH_RECURSION_LIMIT})
+            hitl = hitl_from_graph_state(graph_state)
+            if hitl:
+                pending_approvals.append({
+                    "conversation_id": conv_id,
+                    "customer_id": row.get("customer_id"),
+                    "description": hitl["description"],
+                    "options": hitl.get("options", ["approve", "reject"]),
+                })
+        except Exception:
+            pass
+
+    return {
+        "totals": totals,
+        "evaluation": evals,
+        "usage": cost,
+        "recent_conversations": recent,
+        "pending_approvals": pending_approvals,
+    }
 
 
 @app.post("/admin/approve-refund/{conversation_id}")
@@ -454,3 +485,12 @@ async def admin_traces(x_admin_password: str | None = Header(default=None)) -> d
 @app.get("/health")
 async def health() -> dict:
     return {"ok": True, "env": settings.ENV}
+
+
+@app.get("/ready")
+async def ready() -> dict:
+    db_ok = await asyncio.to_thread(ping)
+    payload = {"ok": db_ok, "env": settings.ENV, "checks": {"database": db_ok}}
+    if not db_ok:
+        raise HTTPException(status_code=503, detail=payload)
+    return payload

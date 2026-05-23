@@ -3,10 +3,11 @@ from __future__ import annotations
 from langchain.agents import create_agent
 from langchain.agents.middleware import SummarizationMiddleware
 
+from backend.agents.state import TechCartAgentState
 from backend.config import settings
 from backend.middleware.token_tracker_middleware import TokenTrackerMiddleware
+from backend.middleware.tool_rate_limiter_middleware import build_tool_rate_limiter
 from backend.models import get_fast_model, get_primary_model
-from backend.agents.state import TechCartAgentState
 from backend.tools.technical_tools import TECHNICAL_TOOLS
 
 TECHNICAL_PROMPT = """You are TechCart's production technical support specialist for electronics and gadgets.
@@ -49,6 +50,7 @@ def build_technical_agent():
         system_prompt=TECHNICAL_PROMPT,
         middleware=[
             SummarizationMiddleware(model=get_fast_model(), trigger=("tokens", 100_000), keep=("messages", 10)),
+            build_tool_rate_limiter(8),
             TokenTrackerMiddleware("technical", settings.PRIMARY_MODEL),
         ],
     )

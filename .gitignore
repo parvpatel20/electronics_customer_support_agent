@@ -1,12 +1,42 @@
+# Secrets & env
 .env
+.env.local
+.env.production
+.env.staging
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.staging
+
+# Python
 .venv/
+.venv*/
 __pycache__/
 *.pyc
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+
+# Node
 node_modules/
 dist/
+build/
+
+# Data & DB
 mysql_data/
 phoenix_data/
-.DS_Store
+checkpoints/
+*.db
+*.db-shm
+*.db-wal
 
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# SSL certs (may contain private keys)
+*.pem
+*.crt
+*.key

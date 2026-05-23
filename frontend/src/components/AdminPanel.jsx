@@ -1,6 +1,65 @@
 import { useState } from 'react';
+import { API_BASE } from '../api.js';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+function PendingApproval({ approval, adminPassword, onDone }) {
+  const [acting, setActing] = useState(false);
+  const [result, setResult] = useState('');
+
+  async function decide(decision) {
+    if (acting) return;
+    setActing(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/approve-refund/${approval.conversation_id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Password': adminPassword },
+        body: JSON.stringify({ decision }),
+      });
+      if (!res.ok) {
+        setResult('Failed. Check password or retry.');
+      } else {
+        setResult(decision === 'approve' ? 'Approved.' : 'Rejected.');
+        setTimeout(onDone, 800);
+      }
+    } catch {
+      setResult('Network error.');
+    } finally {
+      setActing(false);
+    }
+  }
+
+  return (
+    <div style={{ padding: '12px', borderRadius: '10px', background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.25)' }}>
+      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '4px' }}>
+        Customer: <strong style={{ color: 'var(--color-text-secondary)' }}>{approval.customer_id}</strong>
+      </p>
+      <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-primary)', lineHeight: 1.4, marginBottom: '10px' }}>
+        {approval.description}
+      </p>
+      {result ? (
+        <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: result.startsWith('Approved') ? '#4ade80' : '#fca5a5' }}>{result}</p>
+      ) : (
+        <div className="flex gap-2">
+          <button
+            className="hitl-btn hitl-btn-approve"
+            style={{ fontSize: '0.75rem', padding: '4px 12px' }}
+            disabled={acting}
+            onClick={() => decide('approve')}
+          >
+            {acting ? '…' : 'Approve'}
+          </button>
+          <button
+            className="hitl-btn hitl-btn-reject"
+            style={{ fontSize: '0.75rem', padding: '4px 12px' }}
+            disabled={acting}
+            onClick={() => decide('reject')}
+          >
+            {acting ? '…' : 'Reject'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminPanel() {
   const [password, setPassword] = useState('');
@@ -9,7 +68,7 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(false);
 
   async function loadMetrics(event) {
-    event.preventDefault();
+    event?.preventDefault();
     setError('');
     setLoading(true);
     let response;
@@ -132,10 +191,30 @@ export default function AdminPanel() {
                   </a>
                 </div>
                 <div className="rounded-xl p-5" style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border-default)' }}>
-                  <h2 className="font-display text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>Pending Approvals</h2>
-                  <p style={{ color: 'var(--color-text-muted)', marginTop: '6px', fontSize: '0.8125rem', lineHeight: 1.5 }}>
-                    Refund approvals appear here when LangGraph returns an interrupt. Use the backend approval endpoint to resume.
-                  </p>
+                  <h2 className="font-display text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                    Pending Approvals
+                    {metrics.pending_approvals?.length > 0 && (
+                      <span style={{ marginLeft: '8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px', borderRadius: '50%', background: 'var(--color-tech-orange)', color: 'white', fontSize: '0.6875rem', fontWeight: 700 }}>
+                        {metrics.pending_approvals.length}
+                      </span>
+                    )}
+                  </h2>
+                  {metrics.pending_approvals?.length > 0 ? (
+                    <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {metrics.pending_approvals.map((approval) => (
+                        <PendingApproval
+                          key={approval.conversation_id}
+                          approval={approval}
+                          adminPassword={password}
+                          onDone={loadMetrics}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ color: 'var(--color-text-muted)', marginTop: '6px', fontSize: '0.8125rem', lineHeight: 1.5 }}>
+                      No pending approvals.
+                    </p>
+                  )}
                 </div>
               </aside>
             </div>
