@@ -3,6 +3,7 @@
 An AI-powered customer support assistant built for electronics stores. Customers can log in, ask questions about their orders, get help with billing, request returns, and get technical product support — all through a clean chat interface.
 
 **Live Demo:** [electronics-customer-support-agent.vercel.app](https://electronics-customer-support-agent.vercel.app/)
+
 **GitHub:** [github.com/parvpatel20/electronics_customer_support_agent](https://github.com/parvpatel20/electronics_customer_support_agent)
 
 ---
