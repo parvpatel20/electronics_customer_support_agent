@@ -1,164 +1,31 @@
-# TechCart AI
+# TechCart AI — Electronics Customer Support Agent
 
-Production-ready electronics customer support system: multi-agent FastAPI backend (LangChain `create_agent` + LangGraph) with a React/Tailwind UI. Uses Groq for LLM inference, HuggingFace BGE-M3 for embeddings, Pinecone for vector search, TiDB Cloud (MySQL-compatible) for state, and Arize Phoenix for tracing.
+An AI-powered customer support assistant built for electronics stores. Customers can log in, ask questions about their orders, get help with billing, request returns, and get technical product support — all through a clean chat interface.
 
-## Architecture
+**Live Demo:** [electronics-customer-support-agent.vercel.app](https://electronics-customer-support-agent.vercel.app/)
+**GitHub:** [github.com/parvpatel20/electronics_customer_support_agent](https://github.com/parvpatel20/electronics_customer_support_agent)
 
-```
-Frontend (Vite + React)
-   │
-   ▼
-FastAPI (SSE chat, HITL approval, admin metrics, health/ready)
-   │
-   ├─► LangGraph supervisor → {triage, billing, technical, returns, supervisor, human}
-   │       │
-   │       ├─► Tools: lookup_order, get_delivery_status, initiate_return,
-   │       │          get_return_status, get_invoice_details,
-   │       │          check_refund_eligibility, process_refund,
-   │       │          update_payment_dispute, get_order_product_context,
-   │       │          search_product_docs, get_product_specs,
-   │       │          check_warranty_status, get_compatibility_info
-   │       │
-   │       └─► Middleware: PII redaction, tool-call limits, summarization,
-   │                       human-in-the-loop refund approval, token tracking
-   │
-   ├─► TiDB Cloud (customers, orders, invoices, returns, conversations,
-   │              messages, token_usage_logs, evaluation_logs)
-   │
-   ├─► Pinecone (RAG: product manuals + ticket memory)
-   │
-   └─► Phoenix Cloud (OpenTelemetry tracing)
-```
+---
 
-## Services & URLs
+## What It Does
 
-| Service          | URL                                      |
-|------------------|------------------------------------------|
-| Backend API      | http://localhost:8000                    |
-| Frontend         | http://localhost:5173                    |
-| Health check     | http://localhost:8000/health             |
-| Readiness check  | http://localhost:8000/ready              |
-| Phoenix traces   | configured via `PHOENIX_BASE_URL`        |
+- **Order Tracking** — Check order status, delivery updates, and invoice details in real time
+- **Billing Support** — Resolve payment disputes and get invoice clarifications instantly
+- **Returns & Refunds** — Initiate returns, check refund eligibility, and track RMA status
+- **Technical Help** — Get product specs, compatibility info, and warranty status using AI-powered product knowledge
+- **Smart Routing** — The system automatically figures out what type of support you need and routes you to the right specialist agent
+- **Safe Refund Approvals** — Refunds go through a human approval step before processing, so nothing slips through automatically
 
-## Prerequisites
+---
 
-- Python `>=3.11,<3.14` (3.13 recommended — `langchain-pinecone` does not yet support 3.14)
-- Node 20+
-- A TiDB Cloud cluster (public endpoint), Phoenix Cloud space, Groq API key, HuggingFace token, Pinecone API key
+## Why TechCart AI?
 
-## Configuration
+Most support chatbots give you scripted answers that don't actually solve your problem. TechCart AI is different:
 
-Copy `.env.example` to `.env` and fill in:
+- **It knows your data.** Connected to real order history, invoices, and return records — not just generic FAQs
+- **It routes intelligently.** A triage agent reads your message and decides whether billing, technical, or returns handles it — no endless menus
+- **It understands your products.** Product manuals and past support tickets are indexed so it can answer specific technical questions accurately
+- **It's safe by design.** Sensitive actions like refunds require human approval before going through
+- **It remembers context.** Conversation history is maintained so you don't have to repeat yourself
 
-```
-GROQ_API_KEY=...
-HF_TOKEN=...
-PINECONE_API_KEY=...
-MYSQL_HOST=gateway01.<region>.prod.aws.tidbcloud.com
-MYSQL_PORT=4000
-MYSQL_USER=...
-MYSQL_PASSWORD=...
-MYSQL_DATABASE=techcart
-PHOENIX_BASE_URL=https://app.phoenix.arize.com/s/<space>
-PHOENIX_COLLECTOR_ENDPOINT=https://app.phoenix.arize.com/s/<space>/v1/traces
-PHOENIX_API_KEY=...
-ADMIN_PASSWORD=...
-```
-
-For a TiDB Cloud public endpoint, leave `MYSQL_SSL_VERIFY_CERT=false`. For a `privatelink` host, connect from an AWS VPC and set `MYSQL_SSL_CA` if your network policy needs strict TLS.
-
-The frontend reads `VITE_API_BASE` from `frontend/.env` (defaults to `http://localhost:8000`).
-
-## Quick Start (Local)
-
-```bash
-make install                # creates .venv313 and installs requirements
-make preflight              # validates Python version, modules, and env
-make seed                   # applies schema, seeds dummy data, ingests RAG manuals
-make backend                # runs FastAPI with reload on :8000
-# in another shell:
-make frontend               # runs Vite dev server on :5173
-```
-
-A successful `make seed` ingests:
-
-- 8 demo customers (`CUST-IN-001` … `CUST-IN-008`)
-- 6 SKUs across networking, GPU, audio, wearables, home theatre, accessories
-- 8 orders covering delivered/refundable, shipped/in-transit, out-of-window, disputed-invoice, active-RMA, pending, cancelled, and a clean second-customer refund path
-- 7 invoices spanning paid, unpaid, disputed, refunded states
-- 1 RMA (in transit)
-- Sample resolved conversations + RAG manual/ticket chunks in Pinecone
-
-## Quick Start (Docker)
-
-```bash
-cp .env.example .env        # fill in cloud credentials
-docker compose up --build   # builds + starts backend
-docker compose --profile frontend up --build  # add the frontend dev server
-```
-
-The backend image runs as a non-root user and exposes a `/health` HTTP healthcheck.
-
-## API Surface
-
-| Endpoint                                   | Method | Purpose                                  |
-|--------------------------------------------|--------|------------------------------------------|
-| `/auth/login`                              | POST   | Verify customer id or email              |
-| `/chat`                                    | POST   | Stream support response (SSE)            |
-| `/chat/approve`                            | POST   | Resume a HITL refund approval (SSE)      |
-| `/customers/{customer_id}/support`         | GET    | Recent messages + pending HITL state     |
-| `/admin/metrics`                           | GET    | Routing/quality/cost metrics (X-Admin)   |
-| `/admin/approve-refund/{conversation_id}`  | POST   | Admin-side HITL resume                   |
-| `/admin/traces`                            | GET    | Phoenix project URL                      |
-| `/health`                                  | GET    | Liveness                                 |
-| `/ready`                                   | GET    | Readiness (DB ping)                      |
-
-Admin endpoints require the `X-Admin-Password` header.
-
-## Production Notes
-
-- All Groq, Pinecone, HuggingFace, and TiDB clients have retry/backoff. The refund tool is wrapped in `HumanInTheLoopMiddleware` so it can never execute without explicit human approval.
-- Phoenix tracing is configured in the FastAPI lifespan; failure to reach the collector never blocks request handling.
-- Conversation state persists in the LangGraph checkpointer. When TiDB cannot serve the JSON_TABLE reads the checkpointer requires (rare), the API automatically falls back to `InMemorySaver` so the agent still works.
-- Logs are unified via `backend.logging_config.configure_logging()` and emit at `LOG_LEVEL` (default `INFO`).
-- `make seed` is idempotent. It clears `CUST-IN-%` rows, re-applies the schema, and re-ingests manuals/tickets.
-
-## Operational Commands
-
-```bash
-make preflight              # verify env + modules
-make test-cloud             # ping TiDB and Phoenix endpoints
-make schema                 # apply schema only
-make seed                   # full reset of demo dataset
-make test-triage            # deterministic triage heuristic regression
-make smoke-chat             # SSE smoke tests (assumes backend running)
-make backend-prod           # uvicorn with multiple workers
-```
-
-## Repo Layout
-
-```
-backend/
-  api/main.py               FastAPI app, SSE streaming, HITL endpoints
-  agents/                   triage + 4 specialist agents
-  tools/                    DB-backed tools (billing/returns/technical)
-  middleware/               PII, token tracker, tool rate limiter
-  memory/                   conversation + long-term history helpers
-  graph/                    LangGraph multi-agent orchestration + checkpointer
-  rag/                      Pinecone ingest + retrieval
-  db/                       PyMySQL client + schema.sql
-  observability/            Phoenix OTel setup
-  evaluation/               LLM-as-judge
-  config.py                 Pydantic settings
-  logging_config.py         Unified logging
-frontend/
-  src/                      React UI (chat, login, admin)
-scripts/
-  seed_demo.py              Full dummy-data + RAG seed
-  init_tidb_schema.py       Schema-only init
-  preflight.py              Environment validator
-  test_*.py                 Connectivity + triage regression
-data/
-  product_manuals/          Default RAG docs
-  seed_rag_india/           Seed manuals + resolved tickets
-```
+Whether you're a customer checking on a delayed shipment or asking why your GPU isn't compatible with your motherboard — TechCart AI handles it in one place.
