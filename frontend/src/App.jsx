@@ -35,7 +35,7 @@ export default function App() {
     <main className="grid-texture min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
       {/* ─── Top Navigation ─── */}
       <nav className="glass nav-gradient-bottom sticky top-0 z-50" style={{ borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: 'none' }}>
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-3">
+        <div className="mx-auto flex max-w-[1180px] items-center justify-between px-6 py-3" style={{ minHeight: 'var(--nav-height)' }}>
           <button
             onClick={() => navigate(customer ? '/chat' : '/')}
             className="flex items-center gap-3 group"

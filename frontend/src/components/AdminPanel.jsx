@@ -98,7 +98,7 @@ export default function AdminPanel() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-5 py-6 fade-in">
+    <section className="page-shell fade-in" style={{ paddingTop: '28px', paddingBottom: '32px' }}>
       <div className="glass-card" style={{ padding: '28px' }}>
         <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
@@ -238,7 +238,7 @@ export default function AdminPanel() {
 
 function Metric({ label, value, icon }) {
   return (
-    <div className="rounded-xl p-5" style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border-default)' }}>
+    <div className="rounded-xl p-5 card-hover" style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border-default)' }}>
       <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
         <p style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>
           {label}

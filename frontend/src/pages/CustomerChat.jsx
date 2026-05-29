@@ -2,7 +2,7 @@ import ChatWidget from '../components/ChatWidget.jsx';
 
 export default function CustomerChat({ customer }) {
   return (
-    <div className="flex flex-1" style={{ height: 'calc(100vh - 57px)', minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+    <div className="flex flex-1" style={{ height: 'calc(100vh - var(--nav-height))', minHeight: 0, position: 'relative', overflow: 'hidden' }}>
       {/* Decorative background blobs */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <div style={{ position: 'absolute', top: '-140px', right: '-80px', width: '520px', height: '520px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(249,115,22,0.07) 0%, transparent 70%)', filter: 'blur(70px)' }} />

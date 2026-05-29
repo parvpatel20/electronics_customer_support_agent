@@ -2,7 +2,7 @@ import AdminPanel from '../components/AdminPanel.jsx';
 
 export default function AdminDashboard() {
   return (
-    <div style={{ position: 'relative', minHeight: 'calc(100vh - 57px)', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', minHeight: 'calc(100vh - var(--nav-height))', overflow: 'hidden' }}>
       {/* Decorative background blobs */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <div style={{ position: 'absolute', top: '-80px', right: '-60px', width: '560px', height: '560px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(249,115,22,0.05) 0%, transparent 65%)', filter: 'blur(90px)' }} />

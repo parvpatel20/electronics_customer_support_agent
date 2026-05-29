@@ -162,7 +162,10 @@ export default function LoginPage({ onLogin }) {
             <p style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: '16px' }}>
               Quick access — Demo accounts
             </p>
-            <div className="flex flex-wrap justify-center gap-3">
+            <div
+              className="grid gap-3"
+              style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', textAlign: 'left' }}
+            >
               {demoCustomers.map((c) => (
                 <button
                   key={c.id}
@@ -171,13 +174,13 @@ export default function LoginPage({ onLogin }) {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',
-                    padding: '10px 16px',
+                    padding: '12px 14px',
                     borderRadius: '12px',
                     background: 'var(--color-surface-2)',
                     border: '1px solid var(--color-border-default)',
                     cursor: 'pointer',
                     textAlign: 'left',
-                    minWidth: '200px',
+                    width: '100%',
                   }}
                   onClick={() => setIdentifier(c.id)}
                   type="button"
