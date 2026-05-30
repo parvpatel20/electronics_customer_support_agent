@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { MessagesSquare, LayoutDashboard, LogOut, Sun, Moon } from 'lucide-react';
 import logo from './assets/techcart-logo.png';
 import CustomerChat from './pages/CustomerChat.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import LoginPage from './components/LoginPage.jsx';
+import useTheme from './useTheme.js';
 
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const [customer, setCustomer] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('techcart_customer') || 'null');
@@ -32,64 +35,87 @@ export default function App() {
   const isChat = location.pathname.startsWith('/chat');
 
   return (
-    <main className="grid-texture min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
+    <main className="min-h-screen" style={{ background: 'var(--bg)' }}>
       {/* ─── Top Navigation ─── */}
-      <nav className="glass nav-gradient-bottom sticky top-0 z-50" style={{ borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: 'none' }}>
-        <div className="mx-auto flex max-w-[1180px] items-center justify-between px-6 py-3" style={{ minHeight: 'var(--nav-height)' }}>
+      <nav className="nav-shell">
+        <div
+          className="mx-auto flex items-center justify-between gap-3 px-6"
+          style={{ maxWidth: 'var(--content-max)', minHeight: 'var(--nav-height)' }}
+        >
           <button
             onClick={() => navigate(customer ? '/chat' : '/')}
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-3"
             style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <img src={logo} alt="TechCart" style={{ height: '38px', width: '38px', objectFit: 'contain', flexShrink: 0 }} />
-            <div>
-              <p className="font-display text-lg font-bold" style={{ color: 'var(--color-text-primary)', lineHeight: 1.2 }}>
+            <img src={logo} alt="TechCart" style={{ height: '36px', width: '36px', objectFit: 'contain', flexShrink: 0 }} />
+            <div style={{ textAlign: 'left' }}>
+              <p className="font-display" style={{ fontSize: '1.0625rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.15 }}>
                 TechCart AI
               </p>
-              <p style={{ color: 'var(--color-text-tertiary)', fontSize: '0.7rem', fontWeight: 500 }}>
+              <p style={{ color: 'var(--text-subtle)', fontSize: '0.6875rem', fontWeight: 500 }}>
                 Intelligent Support
               </p>
             </div>
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {customer && (
-              <div className="hidden sm:flex items-center gap-2 rounded-xl px-3 py-1.5" style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border-default)' }}>
-                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-tech-orange), #ea580c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem', fontWeight: 800, color: 'white', flexShrink: 0 }}>
+              <div
+                className="hidden sm:flex items-center gap-2 rounded-lg px-3"
+                style={{ height: '38px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+              >
+                <div
+                  style={{
+                    width: '24px', height: '24px', borderRadius: '50%',
+                    background: 'var(--primary)', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', fontSize: '0.6875rem', fontWeight: 700,
+                    color: 'var(--primary-fg)', flexShrink: 0,
+                  }}
+                >
                   {customer.name?.[0]?.toUpperCase()}
                 </div>
-                <span style={{ color: 'var(--color-text-primary)', fontWeight: 600, fontSize: '0.8125rem' }}>{customer.name}</span>
-                <span style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem', paddingLeft: '2px', borderLeft: '1px solid var(--color-border-default)' }}>{customer.customer_id}</span>
+                <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: '0.8125rem' }}>{customer.name}</span>
+                <span className="text-mono" style={{ color: 'var(--text-subtle)', fontSize: '0.6875rem', paddingLeft: '8px', borderLeft: '1px solid var(--border)' }}>
+                  {customer.customer_id}
+                </span>
               </div>
             )}
 
             {/* Page toggle */}
-            <div className="flex rounded-lg p-0.5" style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border-default)' }}>
+            <div className="nav-toggle" role="tablist" aria-label="Switch view">
               <button
-                className="rounded-md px-4 py-1.5 text-sm font-semibold transition-all duration-200"
-                style={{
-                  background: isChat ? 'linear-gradient(135deg, var(--color-tech-orange), #ea580c)' : 'transparent',
-                  color: isChat ? 'white' : 'var(--color-text-secondary)',
-                }}
+                role="tab"
+                aria-selected={isChat}
+                className={isChat ? 'active' : ''}
                 onClick={() => navigate(customer ? '/chat' : '/')}
               >
-                Chat
+                <span className="hidden sm:inline">Chat</span>
+                <MessagesSquare size={16} className="sm:hidden" />
               </button>
               <button
-                className="rounded-md px-4 py-1.5 text-sm font-semibold transition-all duration-200"
-                style={{
-                  background: isAdmin ? 'linear-gradient(135deg, var(--color-tech-orange), #ea580c)' : 'transparent',
-                  color: isAdmin ? 'white' : 'var(--color-text-secondary)',
-                }}
+                role="tab"
+                aria-selected={isAdmin}
+                className={isAdmin ? 'active' : ''}
                 onClick={() => navigate('/admin')}
               >
-                Admin
+                <span className="hidden sm:inline">Admin</span>
+                <LayoutDashboard size={16} className="sm:hidden" />
               </button>
             </div>
 
+            <button
+              className="btn-icon"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
             {customer && (
-              <button className="btn-ghost" onClick={handleLogout}>
-                Sign out
+              <button className="btn btn-secondary btn-sm" onClick={handleLogout}>
+                <LogOut size={16} />
+                <span className="hidden sm:inline">Sign out</span>
               </button>
             )}
           </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertTriangle, RotateCw } from 'lucide-react';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -23,20 +24,26 @@ export default class ErrorBoundary extends React.Component {
     if (!this.state.error) return this.props.children;
 
     return (
-      <section style={{ padding: '60px 20px', maxWidth: '640px', margin: '0 auto', textAlign: 'center' }}>
-        <h1 className="font-display" style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>
-          Something went wrong
-        </h1>
-        <p style={{ color: 'var(--color-text-secondary)', marginTop: '12px', fontSize: '0.9375rem' }}>
+      <section style={{ padding: '64px 20px', maxWidth: '560px', margin: '0 auto', textAlign: 'center' }}>
+        <div
+          className="mx-auto flex items-center justify-center"
+          style={{ width: '52px', height: '52px', borderRadius: 'var(--radius-lg)', background: 'var(--error-tint)', color: 'var(--error)', marginBottom: '16px' }}
+        >
+          <AlertTriangle size={26} />
+        </div>
+        <h1 className="h2">Something went wrong</h1>
+        <p className="text-muted" style={{ marginTop: '10px', fontSize: '0.9375rem' }}>
           The support UI hit an unexpected error. Reload the page or come back in a moment.
         </p>
         <pre
+          className="text-mono"
           style={{
             marginTop: '20px',
             padding: '16px',
-            background: 'var(--color-surface-2)',
-            borderRadius: '12px',
-            color: 'var(--color-text-secondary)',
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            color: 'var(--text-muted)',
             fontSize: '0.75rem',
             textAlign: 'left',
             overflow: 'auto',
@@ -46,14 +53,14 @@ export default class ErrorBoundary extends React.Component {
           {String(this.state.error?.message || this.state.error)}
         </pre>
         <button
-          className="btn-primary"
+          className="btn btn-primary"
           style={{ marginTop: '20px' }}
           onClick={() => {
             this.reset();
             if (typeof window !== 'undefined') window.location.reload();
           }}
         >
-          Reload
+          <RotateCw size={16} /> Reload
         </button>
       </section>
     );

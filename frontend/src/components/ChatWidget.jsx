@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { Wrench, CreditCard, Package, Shuffle, Send, Clock } from 'lucide-react';
 import MessageBubble from './MessageBubble.jsx';
 import { API_BASE } from '../api.js';
 import logo from '../assets/techcart-logo.png';
@@ -43,10 +44,10 @@ export default function ChatWidget({ customer }) {
 
   const samples = useMemo(
     () => [
-      { label: 'Technical', color: '#3b82f6', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>, prompt: 'My Wi-Fi 6E router drops when the microwave runs — ORD-IN-001. What should I do?' },
-      { label: 'Billing', color: '#f97316', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>, prompt: 'Process a full refund for order ORD-IN-004 now. Invoice INV-IN-004 was wrong.' },
-      { label: 'Returns', color: '#2dd4bf', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>, prompt: 'Where is my soundbar? Order ORD-IN-002. I am in Bengaluru.' },
-      { label: 'Mixed', color: '#a855f7', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" x2="21" y1="20" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" x2="21" y1="15" y2="21"/><line x1="4" x2="9" y1="4" y2="9"/></svg>, prompt: 'Hub HDMI black screen AND invoice INV-IN-004 is wrong.' },
+      { label: 'Technical', color: 'var(--info)', Icon: Wrench, prompt: 'My Wi-Fi 6E router drops when the microwave runs — ORD-IN-001. What should I do?' },
+      { label: 'Billing', color: 'var(--primary)', Icon: CreditCard, prompt: 'Process a full refund for order ORD-IN-004 now. Invoice INV-IN-004 was wrong.' },
+      { label: 'Returns', color: 'var(--accent)', Icon: Package, prompt: 'Where is my soundbar? Order ORD-IN-002. I am in Bengaluru.' },
+      { label: 'Mixed', color: 'var(--text-muted)', Icon: Shuffle, prompt: 'Hub HDMI black screen AND invoice INV-IN-004 is wrong.' },
     ],
     [],
   );
@@ -228,6 +229,7 @@ export default function ChatWidget({ customer }) {
   }
 
   const showWelcome = supportLoaded && messages.length === 0 && !streaming;
+  const canSend = input.trim() && !streaming && !hitlPending;
 
   if (!supportLoaded && customer?.customer_id) {
     return (
@@ -237,7 +239,7 @@ export default function ChatWidget({ customer }) {
           <span></span>
           <span></span>
         </div>
-        <p style={{ color: 'var(--color-text-muted)', marginTop: '16px', fontSize: '0.875rem' }}>
+        <p className="text-subtle" style={{ marginTop: '16px', fontSize: '0.875rem' }}>
           Loading your support thread…
         </p>
       </div>
@@ -249,52 +251,42 @@ export default function ChatWidget({ customer }) {
       <div
         ref={viewportRef}
         className="flex-1 overflow-y-auto"
-        style={{ padding: '24px 16px', maxWidth: '860px', width: '100%', margin: '0 auto' }}
+        style={{ padding: '24px 16px', maxWidth: 'var(--chat-max)', width: '100%', margin: '0 auto' }}
       >
         {showWelcome && (
-          <div className="stagger-in" style={{ maxWidth: '640px', margin: '80px auto 0', textAlign: 'center' }}>
-            <img src={logo} alt="TechCart" className="mx-auto mb-5" style={{ height: '88px', objectFit: 'contain' }} />
-            <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          <div className="stagger-in" style={{ maxWidth: '600px', margin: '64px auto 0', textAlign: 'center' }}>
+            <img src={logo} alt="TechCart" className="mx-auto" style={{ height: '64px', objectFit: 'contain', marginBottom: '20px' }} />
+            <h1 className="h2">
               Hi {customer?.name?.split(' ')[0] || 'there'}, how can we help?
             </h1>
-            <p style={{ color: 'var(--color-text-secondary)', marginTop: '8px', fontSize: '0.9375rem', lineHeight: 1.6 }}>
+            <p className="text-muted" style={{ marginTop: '8px', fontSize: '0.9375rem', lineHeight: 1.6 }}>
               One support thread for your account. Ask about orders, billing, returns, or troubleshooting.
             </p>
 
             <div className="mt-8 grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-              {samples.map((s) => (
+              {samples.map(({ label, color, Icon, prompt }) => (
                 <button
-                  key={s.label}
+                  key={label}
                   type="button"
-                  className="sidebar-item"
-                  style={{
-                    textAlign: 'left',
-                    padding: '14px 16px',
-                    borderRadius: '14px',
-                    background: 'var(--color-surface-2)',
-                    border: '1px solid var(--color-border-default)',
-                    cursor: 'pointer',
-                  }}
+                  className="card-inset card-hover"
+                  style={{ textAlign: 'left', padding: '14px 16px', background: 'var(--surface)', cursor: 'pointer' }}
                   disabled={streaming || !!hitlPending}
-                  onClick={() => { setInput(s.prompt); textareaRef.current?.focus(); }}
+                  onClick={() => { setInput(prompt); textareaRef.current?.focus(); }}
                 >
-                  <span style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '32px', height: '32px',
-                    borderRadius: '8px',
-                    background: `${s.color}18`,
-                    color: s.color,
-                    flexShrink: 0,
-                  }}>
-                    {s.icon}
+                  <span
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      width: '34px', height: '34px', borderRadius: 'var(--radius-md)',
+                      background: 'var(--surface-2)', color, flexShrink: 0,
+                    }}
+                  >
+                    <Icon size={18} />
                   </span>
-                  <p style={{ fontWeight: 700, fontSize: '0.8125rem', color: s.color, marginTop: '8px' }}>
-                    {s.label}
+                  <p style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--text)', marginTop: '10px' }}>
+                    {label}
                   </p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '4px', lineHeight: 1.4 }}>
-                    {s.prompt.slice(0, 55)}…
+                  <p className="text-subtle" style={{ fontSize: '0.75rem', marginTop: '4px', lineHeight: 1.45 }}>
+                    {prompt.slice(0, 55)}…
                   </p>
                 </button>
               ))}
@@ -307,16 +299,19 @@ export default function ChatWidget({ customer }) {
         ))}
 
         {hitlPending && (
-          <div className="stagger-in" style={{ maxWidth: '480px', margin: '16px 0', padding: '20px', borderRadius: '16px', background: 'var(--color-surface-2)', border: '1px solid rgba(249, 115, 22, 0.35)' }}>
-            <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div
+            className="stagger-in card"
+            style={{ maxWidth: '480px', margin: '16px 0', padding: '18px', borderColor: 'var(--primary-border)' }}
+          >
+            <p className="flex items-center gap-2" style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text)', marginBottom: '6px' }}>
+              <Clock size={16} style={{ color: 'var(--warning)' }} />
               Pending support team approval
             </p>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: '12px', lineHeight: 1.5 }}>
+            <p className="text-muted" style={{ fontSize: '0.8125rem', marginBottom: '12px', lineHeight: 1.5 }}>
               {hitlPending.description}
             </p>
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b', animation: 'pulse 1.5s ease-in-out infinite' }} />
+            <p className="text-subtle flex items-center gap-2" style={{ fontSize: '0.75rem' }}>
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--warning)', animation: 'pulse 1.5s ease-in-out infinite' }} />
               Waiting for our support team to review. You'll see the result here automatically.
             </p>
           </div>
@@ -334,58 +329,52 @@ export default function ChatWidget({ customer }) {
       </div>
 
       {error && (
-        <div className="fade-in" style={{ margin: '0 16px 8px', padding: '10px 16px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: '0.8125rem', fontWeight: 500, color: '#fca5a5' }}>
+        <div
+          className="fade-in"
+          role="alert"
+          style={{
+            margin: '0 auto 8px', maxWidth: 'var(--chat-max)', width: '100%', padding: '10px 14px',
+            borderRadius: 'var(--radius-md)', background: 'var(--error-tint)', border: '1px solid var(--error)',
+            fontSize: '0.8125rem', fontWeight: 500, color: 'var(--error)',
+          }}
+        >
           {error}
         </div>
       )}
 
-      <div style={{ padding: '12px 16px 16px', borderTop: '1px solid var(--color-border-default)' }}>
-        <div
-          className="flex items-end gap-3 chat-composer"
-          style={{ maxWidth: '860px', margin: '0 auto', background: 'var(--color-surface-2)', borderRadius: '16px', border: '1px solid var(--color-border-default)', padding: '8px 8px 8px 16px', transition: 'border-color 200ms' }}
-        >
+      <div style={{ padding: '12px 16px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
+        <div className="composer" style={{ maxWidth: 'var(--chat-max)', margin: '0 auto' }}>
           <textarea
             ref={textareaRef}
             className="flex-1 resize-none"
             style={{
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              color: 'var(--color-text-primary)',
-              fontSize: '0.9375rem',
-              lineHeight: 1.5,
-              padding: '6px 0',
-              minHeight: '24px',
-              maxHeight: '160px',
+              background: 'transparent', border: 'none', outline: 'none', color: 'var(--text)',
+              fontSize: '0.9375rem', lineHeight: 1.5, padding: '8px 0', minHeight: '24px', maxHeight: '160px',
             }}
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={hitlPending ? 'Use the buttons above to approve or reject…' : 'Type your message...'}
+            placeholder={hitlPending ? 'Use the buttons above to approve or reject…' : 'Type your message…'}
             disabled={streaming || !!hitlPending}
             rows={1}
           />
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200"
+            className="flex items-center justify-center"
             style={{
-              background: input.trim() && !streaming && !hitlPending
-                ? 'linear-gradient(135deg, var(--color-tech-orange), #ea580c)'
-                : 'var(--color-surface-3)',
-              border: 'none',
-              cursor: input.trim() && !streaming && !hitlPending ? 'pointer' : 'default',
-              color: input.trim() && !streaming && !hitlPending ? 'white' : 'var(--color-text-muted)',
-              flexShrink: 0,
+              width: '40px', height: '40px', borderRadius: 'var(--radius-md)', flexShrink: 0, border: 'none',
+              background: canSend ? 'var(--primary)' : 'var(--surface-2)',
+              color: canSend ? 'var(--primary-fg)' : 'var(--text-subtle)',
+              cursor: canSend ? 'pointer' : 'default',
+              transition: 'background-color 150ms ease, color 150ms ease',
             }}
             disabled={streaming || !input.trim() || !!hitlPending}
             onClick={sendMessage}
+            aria-label="Send message"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
+            <Send size={18} />
           </button>
         </div>
-        <p style={{ textAlign: 'center', marginTop: '8px', fontSize: '0.6875rem', color: 'var(--color-text-muted)' }}>
+        <p className="text-subtle" style={{ textAlign: 'center', marginTop: '8px', fontSize: '0.6875rem' }}>
           {hitlPending ? 'Approve or reject the pending action to continue' : 'Press Enter to send · Shift+Enter for new line'}
         </p>
       </div>
