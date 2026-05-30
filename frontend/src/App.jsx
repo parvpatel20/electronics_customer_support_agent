@@ -45,20 +45,21 @@ export default function App() {
           <button
             onClick={() => navigate(customer ? '/chat' : '/')}
             className="flex items-center gap-3"
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, minWidth: 0 }}
           >
             <img src={logo} alt="TechCart" style={{ height: '36px', width: '36px', objectFit: 'contain', flexShrink: 0 }} />
-            <div style={{ textAlign: 'left' }}>
+            <div style={{ textAlign: 'left', minWidth: 0 }}>
               <p className="font-display" style={{ fontSize: '1.0625rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.15 }}>
                 TechCart AI
               </p>
-              <p style={{ color: 'var(--text-subtle)', fontSize: '0.6875rem', fontWeight: 500 }}>
-                Intelligent Support
-              </p>
+              <span className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)', fontSize: '0.6875rem', fontWeight: 500 }}>
+                <span className="status-dot" aria-hidden="true" />
+                Support online
+              </span>
             </div>
           </button>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3" style={{ flexShrink: 0 }}>
             {customer && (
               <div
                 className="hidden sm:flex items-center gap-2 rounded-lg px-3"
@@ -74,8 +75,8 @@ export default function App() {
                 >
                   {customer.name?.[0]?.toUpperCase()}
                 </div>
-                <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: '0.8125rem' }}>{customer.name}</span>
-                <span className="text-mono" style={{ color: 'var(--text-subtle)', fontSize: '0.6875rem', paddingLeft: '8px', borderLeft: '1px solid var(--border)' }}>
+                <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: '0.8125rem', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{customer.name}</span>
+                <span className="text-mono" style={{ color: 'var(--text-subtle)', fontSize: '0.6875rem', paddingLeft: '8px', borderLeft: '1px solid var(--border)', flexShrink: 0 }}>
                   {customer.customer_id}
                 </span>
               </div>

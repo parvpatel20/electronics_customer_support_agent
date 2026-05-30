@@ -2,7 +2,13 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Wrench, CreditCard, Package, Shuffle, Send, Clock } from 'lucide-react';
 import MessageBubble from './MessageBubble.jsx';
 import { API_BASE } from '../api.js';
-import logo from '../assets/techcart-logo.png';
+
+const supportAgents = [
+  { name: 'Billing specialist', img: 'https://i.pravatar.cc/96?img=12' },
+  { name: 'Technical specialist', img: 'https://i.pravatar.cc/96?img=32' },
+  { name: 'Returns specialist', img: 'https://i.pravatar.cc/96?img=45' },
+  { name: 'Support supervisor', img: 'https://i.pravatar.cc/96?img=68' },
+];
 
 function parseSseBlocks(buffer) {
   const blocks = buffer.split('\n\n');
@@ -254,8 +260,27 @@ export default function ChatWidget({ customer }) {
         style={{ padding: '24px 16px', maxWidth: 'var(--chat-max)', width: '100%', margin: '0 auto' }}
       >
         {showWelcome && (
-          <div className="stagger-in" style={{ maxWidth: '600px', margin: '64px auto 0', textAlign: 'center' }}>
-            <img src={logo} alt="TechCart" className="mx-auto" style={{ height: '64px', objectFit: 'contain', marginBottom: '20px' }} />
+          <div className="stagger-in" style={{ maxWidth: '600px', margin: '56px auto 0', textAlign: 'center' }}>
+            <div className="flex flex-col items-center" style={{ marginBottom: '20px' }}>
+              <div className="avatar-stack" aria-hidden="true">
+                {supportAgents.map((a) => (
+                  <img
+                    key={a.img}
+                    src={a.img}
+                    alt=""
+                    loading="lazy"
+                    title={a.name}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                ))}
+              </div>
+              <span
+                className="flex items-center gap-2 text-muted"
+                style={{ marginTop: '10px', fontSize: '0.8125rem', fontWeight: 500 }}
+              >
+                <span className="status-dot" /> Specialist agents online · typically replies in seconds
+              </span>
+            </div>
             <h1 className="h2">
               Hi {customer?.name?.split(' ')[0] || 'there'}, how can we help?
             </h1>
