@@ -6,11 +6,13 @@ import CustomerChat from './pages/CustomerChat.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import LoginPage from './components/LoginPage.jsx';
 import useTheme from './useTheme.js';
+import useKeepAlive from './useKeepAlive.js';
 
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  useKeepAlive(true);
   const [customer, setCustomer] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('techcart_customer') || 'null');

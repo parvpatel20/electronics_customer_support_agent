@@ -30,3 +30,25 @@ Most support chatbots give you scripted answers that don't actually solve your p
 - **It remembers context.** Conversation history is maintained so you don't have to repeat yourself
 
 Whether you're a customer checking on a delayed shipment or asking why your GPU isn't compatible with your motherboard — TechCart AI handles it in one place.
+
+---
+
+## Deployment & Keep-Alive
+
+The frontend is deployed on Vercel and talks to a FastAPI backend (default: Railway). Some hosts spin services down after a period of inactivity, which would make the live demo fail with `fetch failed` until the next request re-wakes the container.
+
+Two layers of keep-alive are configured so this doesn't happen:
+
+1. **GitHub Actions cron** — `.github/workflows/keep-alive.yml` pings the backend `/health` every 10 minutes. This is the primary defense and works even when nobody is browsing the site.
+2. **In-app health ping** — `frontend/src/useKeepAlive.js` makes a `no-cors` `GET /health` every 5 minutes while the frontend is open in a browser tab. Defense in depth.
+
+**One-time setup for the GitHub Actions cron:**
+
+1. Make sure the backend is deployed and reachable at `<your-backend-url>/health`.
+2. In this GitHub repo, go to **Settings → Secrets and variables → Actions**.
+3. Add a repository secret:
+   - **Name:** `BACKEND_HEALTH_URL`
+   - **Value:** `https://your-backend-url.example.com/health` (e.g. `https://electronicscustomersupportagent-production.up.railway.app/health`)
+4. The workflow will start running on its next 10-minute window. You can also trigger it manually from the **Actions** tab → **Keep backend alive** → **Run workflow**.
+
+To change the ping frequency, edit the `cron` expression in `.github/workflows/keep-alive.yml` (e.g. `*/5 * * * *` for every 5 minutes).

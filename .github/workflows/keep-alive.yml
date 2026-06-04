@@ -1,0 +1,70 @@
+name: Keep backend alive
+
+# Pings the deployed backend's /health endpoint on a schedule so Railway
+# (or any other host with idle-sleep behavior) does not spin the service
+# down due to inactivity.
+#
+# Setup (one-time):
+#   1. Make sure the backend is deployed and reachable at <backend-url>/health
+#   2. In your GitHub repo go to Settings -> Secrets and variables -> Actions
+#   3. Add a repository secret:
+#        Name:  BACKEND_HEALTH_URL
+#        Value: https://your-backend.example.com/health
+#      (use the Vercel preview / production frontend's own origin, since the
+#       health check only needs to reach the backend, not the frontend.)
+#
+# Trigger manually from the Actions tab -> "Keep backend alive" -> Run workflow.
+
+on:
+  schedule:
+    # Every 10 minutes. Adjust to '*/5 * * * *' if your host sleeps faster.
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    name: Ping backend /health
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Resolve URL
+        id: resolve
+        env:
+          URL: ${{ secrets.BACKEND_HEALTH_URL }}
+        run: |
+          if [ -z "$URL" ]; then
+            echo "::warning::BACKEND_HEALTH_URL secret is not set. Add it in repo Settings -> Secrets -> Actions."
+            echo "url=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Ping health endpoint
+        if: steps.resolve.outputs.url != ''
+        env:
+          URL: ${{ steps.resolve.outputs.url }}
+        run: |
+          echo "Pinging $URL"
+          # -f  fail on HTTP >= 400
+          # -s  silent
+          # -S  show errors
+          # -m  max-time
+          # -o  write body to log
+          HTTP_CODE=$(curl -fsS -m 15 -o /tmp/health.txt -w "%{http_code}" "$URL" || echo "000")
+          echo "HTTP $HTTP_CODE"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Backend did not return 200 (got $HTTP_CODE). Response body:"
+            cat /tmp/health.txt || true
+            exit 1
+          fi
+          echo "Body:"
+          cat /tmp/health.txt
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::warning::Keep-alive ping failed. The backend may be down or the BACKEND_HEALTH_URL secret may be wrong."
