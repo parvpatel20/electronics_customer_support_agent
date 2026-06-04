@@ -15,7 +15,7 @@ langchain-huggingface==1.2.0
 langchain-pinecone==0.2.13
 pinecone==7.3.0
 pypdf==6.4.1
-unstructured[md]==0.18.21
+# unstructured[md]==0.18.21  # ingestor-only: run pip install unstructured[md] locally before seeding
 arize-phoenix-otel==0.13.0
 openinference-instrumentation-langchain==0.1.60
 opentelemetry-sdk==1.39.0

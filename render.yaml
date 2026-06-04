@@ -1,0 +1,63 @@
+services:
+  - type: web
+    name: techcart-backend
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ENV
+        value: prod
+      - key: GROQ_API_KEY
+        sync: false
+      - key: HF_TOKEN
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        value: 4000
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_DATABASE
+        value: techcart
+      - key: MYSQL_SSL_VERIFY_CERT
+        value: false
+      - key: MYSQL_SSL_VERIFY_IDENTITY
+        value: false
+      - key: PINECONE_INDEX_NAME
+        value: techcart-support
+      - key: PINECONE_NAMESPACE_PROD
+        value: prod
+      - key: PINECONE_CLOUD
+        value: aws
+      - key: PINECONE_REGION
+        value: us-east-1
+      - key: PRIMARY_MODEL
+        value: llama-3.3-70b-versatile
+      - key: FAST_MODEL
+        value: llama-3.1-8b-instant
+      - key: HF_EMBEDDING_MODEL
+        value: BAAI/bge-m3
+      - key: EMBEDDING_DIMENSION
+        value: 1024
+      - key: CORS_ORIGINS
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PHOENIX_API_KEY
+        sync: false
+      - key: PHOENIX_COLLECTOR_ENDPOINT
+        sync: false
+      - key: PHOENIX_BASE_URL
+        sync: false
+      - key: PHOENIX_PROJECT_NAME
+        value: techcart-support
+      - key: CHECKPOINT_DB_PATH
+        value: /app/checkpoints/langgraph.db
+      - key: LOG_LEVEL
+        value: INFO
