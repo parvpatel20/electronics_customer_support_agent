@@ -5,12 +5,12 @@ import {
 } from 'lucide-react';
 
 const agentLabels = {
-  billing:    { label: 'Billing',     color: 'var(--primary)', Icon: CreditCard },
-  technical:  { label: 'Technical',   color: 'var(--info)',    Icon: Wrench },
-  returns:    { label: 'Returns',     color: 'var(--accent)',  Icon: RotateCcw },
-  supervisor: { label: 'Supervisor',  color: 'var(--text-muted)', Icon: UserCog },
-  triage:     { label: 'Routing',     color: 'var(--text-subtle)', Icon: Shuffle },
-  human:      { label: 'Human Agent', color: 'var(--success)', Icon: Headset },
+  billing:    { label: 'Billing',     grad: 'linear-gradient(135deg, #6366f1, #d946ef)',  Icon: CreditCard },
+  technical:  { label: 'Technical',   grad: 'linear-gradient(135deg, #3b82f6, #06b6d4)',  Icon: Wrench },
+  returns:    { label: 'Returns',     grad: 'linear-gradient(135deg, #10b981, #06b6d4)',  Icon: RotateCcw },
+  supervisor: { label: 'Supervisor',  grad: 'linear-gradient(135deg, #8b5cf6, #6366f1)',  Icon: UserCog },
+  triage:     { label: 'Routing',     grad: 'linear-gradient(135deg, #f59e0b, #ef4444)',  Icon: Shuffle },
+  human:      { label: 'Human Agent', grad: 'linear-gradient(135deg, #10b981, #22d3ee)',  Icon: Headset },
 };
 
 const mdComponents = {
@@ -109,38 +109,49 @@ const mdComponents = {
 
 export default function MessageBubble({ message }) {
   const isUser = message.role === 'user';
-  const agent = agentLabels[message.agentName] || { label: message.agentName || 'Assistant', color: 'var(--text-muted)', Icon: Bot };
+  const agent = agentLabels[message.agentName] || {
+    label: message.agentName || 'Assistant',
+    grad: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+    Icon: Bot,
+  };
   const AgentIcon = agent.Icon;
 
   return (
     <div
       className={`stagger-in flex ${isUser ? 'justify-end' : 'justify-start'}`}
-      style={{ marginBottom: '16px', alignItems: 'flex-end', gap: '8px' }}
+      style={{ marginBottom: '16px', alignItems: 'flex-end', gap: '10px' }}
     >
       {!isUser && (
         <div
+          className="avatar-gradient"
           style={{
-            width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: agent.color, boxShadow: 'var(--shadow-sm)',
+            background: agent.grad,
+            width: 34, height: 34, borderRadius: '50%',
+            color: '#fff',
+            boxShadow: 'var(--shadow-sm)',
+            animation: 'scaleIn 240ms ease both',
           }}
         >
-          <AgentIcon size={15} />
+          <AgentIcon size={16} />
         </div>
       )}
-      <div className={isUser ? 'msg-user' : 'msg-assistant'} style={{ maxWidth: '82%', padding: '12px 16px' }}>
+      <div
+        className={isUser ? 'msg-user' : 'msg-assistant'}
+        style={{
+          maxWidth: '82%',
+          padding: '12px 16px',
+        }}
+      >
         {!isUser && (
           <div className="flex items-center gap-2" style={{ marginBottom: '8px' }}>
             <span
-              className="badge"
+              className="inline-flex items-center gap-1.5"
               style={{
-                background: 'transparent', color: agent.color,
-                borderColor: 'transparent', paddingLeft: 0, fontWeight: 700,
-                textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.6875rem',
+                fontSize: '0.6875rem', fontWeight: 700,
+                textTransform: 'uppercase', letterSpacing: '0.06em',
+                color: 'var(--text-muted)',
               }}
             >
-              <AgentIcon size={13} />
               {agent.label}
             </span>
             {message.timestamp && (
@@ -161,8 +172,8 @@ export default function MessageBubble({ message }) {
               {message.content}
             </ReactMarkdown>
           ) : (
-            <span style={{ color: 'var(--text-subtle)', fontStyle: 'italic', fontSize: '0.8125rem' }}>
-              Thinking…
+            <span className="flex items-center gap-2" style={{ color: 'var(--text-subtle)', fontSize: '0.8125rem' }}>
+              <span className="status-dot" /> Thinking…
             </span>
           )}
         </div>

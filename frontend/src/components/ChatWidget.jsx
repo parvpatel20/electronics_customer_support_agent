@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { Wrench, CreditCard, Package, Shuffle, Send, Clock } from 'lucide-react';
+import { Wrench, CreditCard, Package, Shuffle, Send, Clock, Sparkles, ArrowDown } from 'lucide-react';
 import MessageBubble from './MessageBubble.jsx';
 import { API_BASE } from '../api.js';
 
@@ -9,6 +9,13 @@ const supportAgents = [
   { name: 'Returns specialist', img: 'https://i.pravatar.cc/96?img=45' },
   { name: 'Support supervisor', img: 'https://i.pravatar.cc/96?img=68' },
 ];
+
+const sampleGradients = {
+  Technical: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
+  Billing: 'linear-gradient(135deg, #6366f1, #d946ef)',
+  Returns: 'linear-gradient(135deg, #10b981, #06b6d4)',
+  Mixed: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+};
 
 function parseSseBlocks(buffer) {
   const blocks = buffer.split('\n\n');
@@ -50,10 +57,10 @@ export default function ChatWidget({ customer }) {
 
   const samples = useMemo(
     () => [
-      { label: 'Technical', color: 'var(--info)', Icon: Wrench, prompt: 'My Wi-Fi 6E router drops when the microwave runs — ORD-IN-001. What should I do?' },
-      { label: 'Billing', color: 'var(--primary)', Icon: CreditCard, prompt: 'Process a full refund for order ORD-IN-004 now. Invoice INV-IN-004 was wrong.' },
-      { label: 'Returns', color: 'var(--accent)', Icon: Package, prompt: 'Where is my soundbar? Order ORD-IN-002. I am in Bengaluru.' },
-      { label: 'Mixed', color: 'var(--text-muted)', Icon: Shuffle, prompt: 'Hub HDMI black screen AND invoice INV-IN-004 is wrong.' },
+      { label: 'Technical', Icon: Wrench, prompt: 'My Wi-Fi 6E router drops when the microwave runs — ORD-IN-001. What should I do?' },
+      { label: 'Billing', Icon: CreditCard, prompt: 'Process a full refund for order ORD-IN-004 now. Invoice INV-IN-004 was wrong.' },
+      { label: 'Returns', Icon: Package, prompt: 'Where is my soundbar? Order ORD-IN-002. I am in Bengaluru.' },
+      { label: 'Mixed', Icon: Shuffle, prompt: 'Hub HDMI black screen AND invoice INV-IN-004 is wrong.' },
     ],
     [],
   );
@@ -260,8 +267,8 @@ export default function ChatWidget({ customer }) {
         style={{ padding: '24px 16px', maxWidth: 'var(--chat-max)', width: '100%', margin: '0 auto' }}
       >
         {showWelcome && (
-          <div className="stagger-in" style={{ maxWidth: '600px', margin: '56px auto 0', textAlign: 'center' }}>
-            <div className="flex flex-col items-center" style={{ marginBottom: '20px' }}>
+          <div className="stagger-in" style={{ maxWidth: '680px', margin: '48px auto 0', textAlign: 'center' }}>
+            <div className="flex flex-col items-center" style={{ marginBottom: '24px' }}>
               <div className="avatar-stack" aria-hidden="true">
                 {supportAgents.map((a) => (
                   <img
@@ -276,43 +283,65 @@ export default function ChatWidget({ customer }) {
               </div>
               <span
                 className="flex items-center gap-2 text-muted"
-                style={{ marginTop: '10px', fontSize: '0.8125rem', fontWeight: 500 }}
+                style={{ marginTop: '12px', fontSize: '0.8125rem', fontWeight: 500 }}
               >
                 <span className="status-dot" /> Specialist agents online · typically replies in seconds
               </span>
             </div>
-            <h1 className="h2">
-              Hi {customer?.name?.split(' ')[0] || 'there'}, how can we help?
+
+            <div
+              className="inline-flex items-center gap-1.5"
+              style={{
+                padding: '6px 12px', borderRadius: 'var(--radius-full)',
+                background: 'var(--primary-tint)', border: '1px solid var(--primary-border)',
+                color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600,
+                marginBottom: '16px',
+              }}
+            >
+              <Sparkles size={13} />
+              One thread · many specialists
+            </div>
+
+            <h1 className="font-display" style={{ fontSize: '2.25rem', fontWeight: 700, lineHeight: 1.12, letterSpacing: '-0.03em' }}>
+              Hi {customer?.name?.split(' ')[0] || 'there'},{' '}
+              <span className="gradient-text">how can we help?</span>
             </h1>
-            <p className="text-muted" style={{ marginTop: '8px', fontSize: '0.9375rem', lineHeight: 1.6 }}>
-              One support thread for your account. Ask about orders, billing, returns, or troubleshooting.
+            <p className="text-muted" style={{ marginTop: '12px', fontSize: '0.9375rem', lineHeight: 1.6, maxWidth: '520px', marginLeft: 'auto', marginRight: 'auto' }}>
+              One support thread for your account. Ask about orders, billing, returns, or troubleshooting — we'll route to the right specialist.
             </p>
 
-            <div className="mt-8 grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-              {samples.map(({ label, color, Icon, prompt }) => (
+            <div className="mt-8 grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+              {samples.map(({ label, Icon, prompt }, i) => (
                 <button
                   key={label}
                   type="button"
-                  className="card-inset card-hover"
-                  style={{ textAlign: 'left', padding: '14px 16px', background: 'var(--surface)', cursor: 'pointer' }}
+                  className="card-elevated stagger-in"
+                  style={{
+                    textAlign: 'left', padding: '16px', cursor: 'pointer',
+                    animationDelay: `${i * 80}ms`,
+                  }}
                   disabled={streaming || !!hitlPending}
                   onClick={() => { setInput(prompt); textareaRef.current?.focus(); }}
                 >
                   <span
+                    className="avatar-gradient"
                     style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      width: '34px', height: '34px', borderRadius: 'var(--radius-md)',
-                      background: 'var(--surface-2)', color, flexShrink: 0,
+                      background: sampleGradients[label] || 'var(--grad-primary)',
+                      width: 38, height: 38, borderRadius: 'var(--radius-sm)',
+                      boxShadow: 'var(--shadow-sm)',
                     }}
                   >
                     <Icon size={18} />
                   </span>
-                  <p style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--text)', marginTop: '10px' }}>
+                  <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text)', marginTop: '12px' }}>
                     {label}
                   </p>
-                  <p className="text-subtle" style={{ fontSize: '0.75rem', marginTop: '4px', lineHeight: 1.45 }}>
-                    {prompt.slice(0, 55)}…
+                  <p className="text-subtle" style={{ fontSize: '0.75rem', marginTop: '4px', lineHeight: 1.5 }}>
+                    {prompt.slice(0, 60)}…
                   </p>
+                  <div className="flex items-center gap-1" style={{ marginTop: '10px', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600 }}>
+                    Try it <ArrowDown size={12} style={{ transform: 'rotate(-90deg)' }} />
+                  </div>
                 </button>
               ))}
             </div>
@@ -326,12 +355,19 @@ export default function ChatWidget({ customer }) {
         {hitlPending && (
           <div
             className="stagger-in card"
-            style={{ maxWidth: '480px', margin: '16px 0', padding: '18px', borderColor: 'var(--primary-border)' }}
+            style={{ maxWidth: '480px', margin: '16px 0', padding: '20px', borderColor: 'var(--warning)' }}
           >
-            <p className="flex items-center gap-2" style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text)', marginBottom: '6px' }}>
-              <Clock size={16} style={{ color: 'var(--warning)' }} />
-              Pending support team approval
-            </p>
+            <div className="flex items-center gap-2" style={{ marginBottom: '8px' }}>
+              <span
+                className="flex items-center justify-center"
+                style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', background: 'var(--warning-tint)', color: 'var(--warning)' }}
+              >
+                <Clock size={15} />
+              </span>
+              <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text)' }}>
+                Pending support team approval
+              </p>
+            </div>
             <p className="text-muted" style={{ fontSize: '0.8125rem', marginBottom: '12px', lineHeight: 1.5 }}>
               {hitlPending.description}
             </p>
@@ -367,7 +403,7 @@ export default function ChatWidget({ customer }) {
         </div>
       )}
 
-      <div style={{ padding: '12px 16px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
+      <div style={{ padding: '12px 16px 16px' }}>
         <div className="composer" style={{ maxWidth: 'var(--chat-max)', margin: '0 auto' }}>
           <textarea
             ref={textareaRef}
@@ -386,11 +422,12 @@ export default function ChatWidget({ customer }) {
           <button
             className="flex items-center justify-center"
             style={{
-              width: '40px', height: '40px', borderRadius: 'var(--radius-md)', flexShrink: 0, border: 'none',
-              background: canSend ? 'var(--primary)' : 'var(--surface-2)',
-              color: canSend ? 'var(--primary-fg)' : 'var(--text-subtle)',
+              width: 42, height: 42, borderRadius: 'var(--radius-md)', flexShrink: 0, border: 'none',
+              background: canSend ? 'var(--grad-primary)' : 'var(--surface-2)',
+              color: canSend ? '#ffffff' : 'var(--text-subtle)',
               cursor: canSend ? 'pointer' : 'default',
-              transition: 'background-color 150ms ease, color 150ms ease',
+              transition: 'all 200ms ease',
+              boxShadow: canSend ? 'var(--shadow-glow)' : 'none',
             }}
             disabled={streaming || !input.trim() || !!hitlPending}
             onClick={sendMessage}
