@@ -33,17 +33,17 @@ export default function LoginPage({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  async function submit(event) {
-    event.preventDefault();
-    const value = identifier.trim();
-    if (!value || loading) return;
+  async function loginWith(value) {
+    const trimmed = value.trim();
+    if (!trimmed || loading) return;
+    setIdentifier(trimmed);
     setLoading(true);
     setError('');
     try {
       const data = await apiJson('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: value }),
+        body: JSON.stringify({ identifier: trimmed }),
       });
       onLogin(data.customer);
     } catch (err) {
@@ -51,6 +51,11 @@ export default function LoginPage({ onLogin }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function submit(event) {
+    event.preventDefault();
+    await loginWith(identifier);
   }
 
   return (
@@ -240,7 +245,7 @@ export default function LoginPage({ onLogin }) {
                     <button
                       key={id}
                       type="button"
-                      onClick={() => setIdentifier(id)}
+                      onClick={() => loginWith(id)}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '12px',
                         padding: '10px 12px', cursor: 'pointer', textAlign: 'left', width: '100%',
