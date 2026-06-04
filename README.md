@@ -48,7 +48,7 @@ Two layers of keep-alive are configured so this doesn't happen:
 2. In this GitHub repo, go to **Settings → Secrets and variables → Actions**.
 3. Add a repository secret:
    - **Name:** `BACKEND_HEALTH_URL`
-   - **Value:** `https://your-backend-url.example.com/health` (e.g. `https://electronicscustomersupportagent-production.up.railway.app/health`)
+   - **Value:** `https://electronics-customer-support-agent.onrender.com/health`
 4. The workflow will start running on its next 10-minute window. You can also trigger it manually from the **Actions** tab → **Keep backend alive** → **Run workflow**.
 
 To change the ping frequency, edit the `cron` expression in `.github/workflows/keep-alive.yml` (e.g. `*/5 * * * *` for every 5 minutes).
