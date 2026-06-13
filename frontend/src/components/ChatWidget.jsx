@@ -295,7 +295,7 @@ export default function ChatWidget({ customer }) {
     <div className="flex flex-col flex-1 fade-in" style={{ minHeight: 0 }}>
       <div
         ref={viewportRef}
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto scroll-hidden"
         style={{ padding: '24px 16px', maxWidth: 'var(--chat-max)', width: '100%', margin: '0 auto' }}
       >
         {showWelcome && (

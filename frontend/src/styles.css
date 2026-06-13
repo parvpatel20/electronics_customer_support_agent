@@ -224,7 +224,14 @@
     border-radius: var(--radius-sm);
   }
 
-  /* Scrollbar */
+  /* Scrollbar — hidden but scrollable */
+  .scroll-hidden {
+    scrollbar-width: none;          /* Firefox */
+    -ms-overflow-style: none;       /* IE/Edge */
+  }
+  .scroll-hidden::-webkit-scrollbar { display: none; }  /* Chrome/Safari */
+
+  /* Scrollbar — visible (for other areas) */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
