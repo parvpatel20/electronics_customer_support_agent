@@ -245,7 +245,7 @@ export default function LoginPage({ onLogin }) {
                     <button
                       key={id}
                       type="button"
-                      onClick={() => loginWith(id)}
+                      onClick={() => setIdentifier(id)}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '12px',
                         padding: '10px 12px', cursor: 'pointer', textAlign: 'left', width: '100%',
