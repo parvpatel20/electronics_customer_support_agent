@@ -55,15 +55,47 @@ export default function ChatWidget({ customer }) {
   const textareaRef = useRef(null);
   const pendingAgentRef = useRef('triage');
 
-  const samples = useMemo(
-    () => [
-      { label: 'Technical', Icon: Wrench, prompt: 'My Wi-Fi 6E router drops when the microwave runs — ORD-IN-001. What should I do?' },
-      { label: 'Billing', Icon: CreditCard, prompt: 'Process a full refund for order ORD-IN-004 now. Invoice INV-IN-004 was wrong.' },
-      { label: 'Returns', Icon: Package, prompt: 'Where is my soundbar? Order ORD-IN-002. I am in Bengaluru.' },
-      { label: 'Mixed', Icon: Shuffle, prompt: 'Hub HDMI black screen AND invoice INV-IN-004 is wrong.' },
-    ],
-    [],
-  );
+  const samples = useMemo(() => {
+    const id = customer?.customer_id;
+    const map = {
+      'CUST-IN-001': [
+        { label: 'Technical', Icon: Wrench, prompt: 'My Wi-Fi 6E router drops when the microwave runs — ORD-IN-001. What should I do?' },
+        { label: 'Refund', Icon: CreditCard, prompt: 'Am I eligible for a refund on ORD-IN-001?' },
+        { label: 'Track', Icon: Package, prompt: 'Where is my router order ORD-IN-001?' },
+        { label: 'Mixed', Icon: Shuffle, prompt: 'Router drops constantly AND honestly I just want my money back ORD-IN-001' },
+      ],
+      'CUST-IN-002': [
+        { label: 'Track', Icon: Package, prompt: 'Where is my soundbar? Order ORD-IN-002. I am in Bengaluru.' },
+        { label: 'Billing', Icon: CreditCard, prompt: 'Why is INV-IN-002 still unpaid? I thought my netbanking went through.' },
+        { label: 'Technical', Icon: Wrench, prompt: 'How do I pair the soundbar with my TV over HDMI eARC?' },
+        { label: 'Return', Icon: Shuffle, prompt: 'The soundbar box looks crushed, I want to return ORD-IN-002.' },
+      ],
+      'CUST-IN-003': [
+        { label: 'Return', Icon: Package, prompt: 'I want to return my earbuds ORD-IN-003, wrong colour came.' },
+        { label: 'Technical', Icon: Wrench, prompt: 'Are my TN-200 earbuds compatible with iPhone 15 Pro? Bluetooth codec wise.' },
+        { label: 'Refund', Icon: CreditCard, prompt: 'Process a refund for ORD-IN-003, I want my money back.' },
+        { label: 'Warranty', Icon: Shuffle, prompt: 'Is ORD-IN-003 still under warranty for the earbuds?' },
+      ],
+      'CUST-IN-004': [
+        { label: 'Billing', Icon: CreditCard, prompt: 'Bank just charged me twice for INV-IN-004? Please fix it.' },
+        { label: 'Technical', Icon: Wrench, prompt: 'Will TC-USB-C-HUB-PRO HDMI work with my laptop without USB-C DisplayPort alt mode?' },
+        { label: 'Track', Icon: Package, prompt: 'Track my USB-C hub order ORD-IN-004.' },
+        { label: 'Dispute', Icon: Shuffle, prompt: 'Open a dispute: INV-IN-004 — bank says duplicate debit.' },
+      ],
+      'CUST-IN-005': [
+        { label: 'RMA', Icon: Package, prompt: 'Any update on my watch return? RMA-IN-SNEHA01.' },
+        { label: 'Technical', Icon: Wrench, prompt: 'My Fit V3 watch shows weird gaps in SpO2 during sleep, how do I fix this?' },
+        { label: 'Warranty', Icon: CreditCard, prompt: 'Is my watch still under warranty? ORD-IN-005.' },
+        { label: 'Refund', Icon: Shuffle, prompt: 'I want a refund AND to return my watch, how does that work?' },
+      ],
+    };
+    return map[id] || [
+      { label: 'Technical', Icon: Wrench, prompt: 'I need help with my product.' },
+      { label: 'Billing', Icon: CreditCard, prompt: 'I have a billing question.' },
+      { label: 'Track', Icon: Package, prompt: 'Where is my order?' },
+      { label: 'Returns', Icon: Shuffle, prompt: 'I want to return something.' },
+    ];
+  }, [customer?.customer_id]);
 
   useEffect(() => {
     if (!customer?.customer_id) return;
