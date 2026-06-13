@@ -1,7 +1,7 @@
 PYTHON ?= python3.13
 VENV ?= .venv313
 
-.PHONY: venv install preflight test-cloud schema seed reset-hitl backend backend-prod frontend frontend-build smoke-chat test-triage docker-build docker-up docker-down clean
+.PHONY: venv install preflight test-cloud schema seed clear-chats clear-chats-docker reset-hitl backend backend-prod frontend frontend-build smoke-chat test-triage docker-build docker-up docker-down clean
 
 venv:
 	$(PYTHON) -m venv $(VENV)
@@ -22,6 +22,12 @@ schema:
 
 seed:
 	$(VENV)/bin/python scripts/seed_demo.py
+
+clear-chats:
+	$(VENV)/bin/python scripts/clear_conversations.py
+
+clear-chats-docker:
+	docker compose exec backend python3 scripts/clear_conversations.py
 
 reset-hitl:
 	docker compose exec backend python3 scripts/reset_hitl.py
