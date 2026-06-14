@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { MessagesSquare, LayoutDashboard, LogOut, Sun, Moon, Sparkles } from 'lucide-react';
+import { LogOut, Sun, Moon, Sparkles } from 'lucide-react';
 import logo from './assets/techcart-logo.png';
 import CustomerChat from './pages/CustomerChat.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
@@ -112,27 +112,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* Page toggle */}
-              <div className="nav-toggle" role="tablist" aria-label="Switch view">
-                <button
-                  role="tab"
-                  aria-selected={isChat}
-                  className={isChat ? 'active' : ''}
-                  onClick={() => navigate(customer ? '/chat' : '/')}
-                >
-                  <MessagesSquare size={15} />
-                  <span className="hidden sm:inline">Chat</span>
-                </button>
-                <button
-                  role="tab"
-                  aria-selected={isAdmin}
-                  className={isAdmin ? 'active' : ''}
-                  onClick={() => navigate('/admin')}
-                >
-                  <LayoutDashboard size={15} />
-                  <span className="hidden sm:inline">Admin</span>
-                </button>
-              </div>
+
 
               <button
                 className="btn-icon"
