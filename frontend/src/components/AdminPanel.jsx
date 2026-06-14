@@ -120,62 +120,33 @@ export default function AdminPanel() {
         style={{ padding: '24px', marginBottom: '24px', background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3.5">
+          <div className="flex flex-col gap-1">
             <div
+              className="inline-flex items-center gap-1"
               style={{
-                width: 42, height: 42, borderRadius: 'var(--radius-md)',
-                background: 'var(--grad-primary)', padding: 1.5,
-                boxShadow: 'var(--shadow-xs)',
+                width: 'fit-content',
+                padding: '2px 8px', borderRadius: 'var(--radius-sm)',
+                background: 'var(--primary-tint)', border: '1px solid var(--primary-border)',
+                color: 'var(--primary)', fontSize: '0.6875rem', fontWeight: 700,
+                textTransform: 'uppercase', letterSpacing: '0.04em',
+                marginBottom: '4px',
               }}
             >
-              <div
-                style={{
-                  width: '100%', height: '100%', borderRadius: 'calc(var(--radius-md) - 1.5px)',
-                  background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  overflow: 'hidden',
-                }}
-              >
-                <img src={logo} alt="TechCart" style={{ width: 26, height: 26, objectFit: 'contain' }} />
-              </div>
+              <Activity size={10} /> Operations
             </div>
-            <div>
-              <div
-                className="inline-flex items-center gap-1"
-                style={{
-                  padding: '2px 8px', borderRadius: 'var(--radius-sm)',
-                  background: 'var(--primary-tint)', border: '1px solid var(--primary-border)',
-                  color: 'var(--primary)', fontSize: '0.6875rem', fontWeight: 700,
-                  textTransform: 'uppercase', letterSpacing: '0.04em',
-                  marginBottom: '4px',
-                }}
-              >
-                <Activity size={10} /> Operations
-              </div>
-              <h1 className="font-display" style={{ fontSize: '1.375rem', fontWeight: 700 }}>
-                Admin <span className="gradient-text">Dashboard</span>
-              </h1>
-            </div>
+            <h1 className="font-display" style={{ fontSize: '1.375rem', fontWeight: 700 }}>
+              Admin <span className="gradient-text">Dashboard</span>
+            </h1>
           </div>
 
-          <form className="flex flex-col gap-2 sm:flex-row" onSubmit={loadMetrics}>
-            <div style={{ position: 'relative' }}>
-              <Lock
-                size={14}
-                style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-subtle)' }}
-              />
-              <input
-                type="password"
-                className="input"
-                style={{ width: '200px', height: '38px', paddingLeft: 34, fontSize: '0.8125rem' }}
-                placeholder="Confirm password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            </div>
-            <button className="btn btn-secondary btn-sm" disabled={loading} style={{ height: '38px' }}>
-              {loading ? (<><Loader2 size={14} className="animate-spin" /> Syncing</>) : 'Sync Metrics'}
-            </button>
-          </form>
+          <button
+            className="btn btn-secondary btn-sm"
+            disabled={loading}
+            style={{ height: '38px' }}
+            onClick={() => loadMetrics()}
+          >
+            {loading ? (<><Loader2 size={14} className="animate-spin" /> Syncing…</>) : 'Sync Metrics'}
+          </button>
         </div>
 
         {error && (
@@ -387,28 +358,7 @@ export default function AdminPanel() {
       {!metrics && !error && (
         <div className="flex flex-col items-center justify-center animate-fade-in" style={{ minHeight: '50vh', padding: '40px 16px' }}>
           {/* Central Logo Above Card (Marketing & Clean UI) */}
-          <div className="flex flex-col items-center gap-2" style={{ marginBottom: '24px' }}>
-            <div
-              style={{
-                width: 44, height: 44, borderRadius: 'var(--radius-md)',
-                background: 'var(--grad-primary)', padding: 1.5,
-                boxShadow: 'var(--shadow-xs)',
-              }}
-            >
-              <div
-                style={{
-                  width: '100%', height: '100%', borderRadius: 'calc(var(--radius-md) - 1.5px)',
-                  background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  overflow: 'hidden',
-                }}
-              >
-                <img src={logo} alt="TechCart" style={{ width: 24, height: 24, objectFit: 'contain' }} />
-              </div>
-            </div>
-            <span className="font-display" style={{ fontSize: '1rem', fontWeight: 700 }}>
-              TechCart Admin Center
-            </span>
-          </div>
+          <div style={{ height: '24px' }} />
 
           <div
             className="card"

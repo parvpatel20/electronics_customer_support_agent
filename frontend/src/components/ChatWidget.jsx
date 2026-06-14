@@ -312,51 +312,7 @@ export default function ChatWidget({ customer }) {
         }}
       >
         <div className="flex flex-col gap-6">
-          {/* Brand & Marketing Area */}
-          <div className="flex flex-col gap-4 border-b border-border pb-5">
-            <div className="flex items-center gap-3">
-              <div
-                style={{
-                  width: 36, height: 36, borderRadius: 'var(--radius-md)',
-                  background: 'var(--grad-primary)', padding: 1.5,
-                  boxShadow: 'var(--shadow-xs)',
-                }}
-              >
-                <div
-                  style={{
-                    width: '100%', height: '100%', borderRadius: 'calc(var(--radius-md) - 1.5px)',
-                    background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <img src={logo} alt="TechCart" style={{ width: 24, height: 24, objectFit: 'contain' }} />
-                </div>
-              </div>
-              <div>
-                <p
-                  className="font-display"
-                  style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.15 }}
-                >
-                  TechCart <span className="gradient-text">AI</span>
-                </p>
-                <span style={{ color: 'var(--text-subtle)', fontSize: '0.6875rem', fontWeight: 500 }}>
-                  Customer Support System
-                </span>
-              </div>
-            </div>
-            
-            <div
-              style={{
-                padding: '6px 10px', borderRadius: 'var(--radius-sm)',
-                background: 'var(--primary-tint)', border: '1px solid var(--primary-border)',
-                color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600,
-                display: 'flex', alignItems: 'center', gap: '6px'
-              }}
-            >
-              <Sparkles size={12} className="text-primary" />
-              Dynamic AI Agent Routing
-            </div>
-          </div>
+
 
           {/* Customer Profile Card */}
           <div className="flex flex-col gap-3 border-b border-border pb-5">
@@ -407,33 +363,7 @@ export default function ChatWidget({ customer }) {
         >
           {showWelcome && (
             <div className="stagger-in" style={{ maxWidth: '640px', margin: '40px auto 0', textAlign: 'center' }}>
-              {/* Clean Marketing Logo Header */}
-              <div className="flex flex-col items-center" style={{ marginBottom: '20px' }}>
-                <div
-                  style={{
-                    width: 54, height: 54, borderRadius: 'var(--radius-lg)',
-                    background: 'var(--grad-primary)', padding: 2,
-                    boxShadow: 'var(--shadow-sm)',
-                    marginBottom: '16px'
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '100%', height: '100%', borderRadius: 'calc(var(--radius-lg) - 2px)',
-                      background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <img src={logo} alt="TechCart" style={{ width: 34, height: 34, objectFit: 'contain' }} />
-                  </div>
-                </div>
-                <span
-                  className="text-subtle"
-                  style={{ fontSize: '0.8125rem', fontWeight: 500 }}
-                >
-                  Specialist support agents online
-                </span>
-              </div>
+              <div style={{ height: '32px' }} />
 
               <h1 className="font-display" style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1.15, letterSpacing: '-0.02em' }}>
                 Hi {customer?.name?.split(' ')[0] || 'there'},{' '}
