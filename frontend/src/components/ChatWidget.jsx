@@ -388,60 +388,12 @@ export default function ChatWidget({ customer }) {
               )}
             </div>
           </div>
-
-          {/* Specialist Node Status Tracker */}
-          <div className="flex flex-col gap-3">
-            <h3 className="eyebrow" style={{ fontSize: '0.6875rem' }}>Active Agents status</h3>
-            
-            <div className="flex flex-col gap-2">
-              {[
-                { id: 'triage', label: 'Triage Agent', desc: 'Analyzes & routes query' },
-                { id: 'billing', label: 'Billing Agent', desc: 'Invoices & refund specialist' },
-                { id: 'technical', label: 'Technical Agent', desc: 'Troubleshooting & product manuals' },
-                { id: 'returns', label: 'Returns Agent', desc: 'RMA window & return requests' },
-                { id: 'supervisor', label: 'Support Supervisor', desc: 'Safety guardrails & escalation' }
-              ].map(agent => {
-                const isActive = activeAgent === agent.id;
-                return (
-                  <div
-                    key={agent.id}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '10px',
-                      padding: '8px 10px', borderRadius: 'var(--radius-md)',
-                      background: isActive ? 'var(--primary-tint)' : 'transparent',
-                      border: isActive ? '1px solid var(--primary-border)' : '1px solid transparent',
-                      transition: 'all 200ms ease'
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 8, height: 8, borderRadius: '50%',
-                        background: isActive ? 'var(--success)' : 'var(--border-strong)',
-                        boxShadow: isActive ? '0 0 0 3px var(--success-tint)' : 'none',
-                        flexShrink: 0
-                      }}
-                      className={isActive ? "status-dot" : ""}
-                    />
-                    <div style={{ minWidth: 0 }}>
-                      <span style={{ display: 'block', fontSize: '0.8125rem', fontWeight: isActive ? 600 : 500, color: isActive ? 'var(--primary)' : 'var(--text)' }}>
-                        {agent.label}
-                      </span>
-                      <span style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--text-subtle)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {agent.desc}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
-        {/* Sidebar Footer / Marketing Branding */}
+        {/* Sidebar Footer */}
         <div className="border-t border-border pt-4 text-center">
-          <span style={{ fontSize: '0.6875rem', color: 'var(--text-subtle)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }} />
-            Secure Session Verified
+          <span style={{ fontSize: '0.6875rem', color: 'var(--text-subtle)' }}>
+            Session Secure
           </span>
         </div>
       </aside>
@@ -476,10 +428,10 @@ export default function ChatWidget({ customer }) {
                   </div>
                 </div>
                 <span
-                  className="flex items-center gap-1.5 text-muted"
+                  className="text-subtle"
                   style={{ fontSize: '0.8125rem', fontWeight: 500 }}
                 >
-                  <span className="status-dot" style={{ display: 'inline-block', width: 6, height: 6 }} /> Specialist agents online · typical reply in seconds
+                  Specialist support agents online
                 </span>
               </div>
 

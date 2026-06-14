@@ -75,9 +75,8 @@ export default function App() {
               >
                 TechCart <span className="gradient-text">AI</span>
               </p>
-              <span className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)', fontSize: '0.6875rem', fontWeight: 500 }}>
-                <span className="status-dot" aria-hidden="true" />
-                Support online
+              <span style={{ color: 'var(--text-subtle)', fontSize: '0.6875rem', fontWeight: 500 }}>
+                AI Support Portal
               </span>
             </div>
           </button>

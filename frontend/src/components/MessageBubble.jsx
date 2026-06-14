@@ -172,8 +172,8 @@ export default function MessageBubble({ message }) {
               {message.content}
             </ReactMarkdown>
           ) : (
-            <span className="flex items-center gap-2" style={{ color: 'var(--text-subtle)', fontSize: '0.8125rem' }}>
-              <span className="status-dot" /> Thinking…
+            <span style={{ color: 'var(--text-subtle)', fontSize: '0.8125rem', fontStyle: 'italic' }}>
+              Thinking…
             </span>
           )}
         </div>
