@@ -4,6 +4,7 @@ import {
   TrendingUp, Activity, ShieldCheck, Lock,
 } from 'lucide-react';
 import { API_BASE } from '../api.js';
+import logo from '../assets/techcart-logo.png';
 
 function scoreColor(val) {
   if (!val || val === '—') return {};
@@ -115,48 +116,64 @@ export default function AdminPanel() {
     <section className="page-shell fade-in" style={{ paddingTop: '32px', paddingBottom: '48px' }}>
       {/* Header */}
       <div
-        className="card-elevated"
-        style={{ padding: '28px', marginBottom: '20px' }}
+        className="card"
+        style={{ padding: '24px', marginBottom: '24px', background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}
       >
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3.5">
             <div
-              className="inline-flex items-center gap-1.5"
               style={{
-                padding: '4px 10px', borderRadius: 'var(--radius-full)',
-                background: 'var(--primary-tint)', border: '1px solid var(--primary-border)',
-                color: 'var(--primary)', fontSize: '0.6875rem', fontWeight: 700,
-                textTransform: 'uppercase', letterSpacing: '0.06em',
-                marginBottom: '12px',
+                width: 42, height: 42, borderRadius: 'var(--radius-md)',
+                background: 'var(--grad-primary)', padding: 1.5,
+                boxShadow: 'var(--shadow-xs)',
               }}
             >
-              <Activity size={12} />
-              Operations
+              <div
+                style={{
+                  width: '100%', height: '100%', borderRadius: 'calc(var(--radius-md) - 1.5px)',
+                  background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  overflow: 'hidden',
+                }}
+              >
+                <img src={logo} alt="TechCart" style={{ width: 26, height: 26, objectFit: 'contain' }} />
+              </div>
             </div>
-            <h1 className="font-display" style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
-              Admin <span className="gradient-text">Dashboard</span>
-            </h1>
-            <p className="text-muted" style={{ marginTop: '6px', fontSize: '0.9375rem', maxWidth: '560px' }}>
-              Routing quality, response evaluation, token cost, and recent conversations — all in one view.
-            </p>
+            <div>
+              <div
+                className="inline-flex items-center gap-1"
+                style={{
+                  padding: '2px 8px', borderRadius: 'var(--radius-sm)',
+                  background: 'var(--primary-tint)', border: '1px solid var(--primary-border)',
+                  color: 'var(--primary)', fontSize: '0.6875rem', fontWeight: 700,
+                  textTransform: 'uppercase', letterSpacing: '0.04em',
+                  marginBottom: '4px',
+                }}
+              >
+                <Activity size={10} /> Operations
+              </div>
+              <h1 className="font-display" style={{ fontSize: '1.375rem', fontWeight: 700 }}>
+                Admin <span className="gradient-text">Dashboard</span>
+              </h1>
+            </div>
           </div>
+
           <form className="flex flex-col gap-2 sm:flex-row" onSubmit={loadMetrics}>
             <div style={{ position: 'relative' }}>
               <Lock
-                size={15}
-                style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-subtle)' }}
+                size={14}
+                style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-subtle)' }}
               />
               <input
                 type="password"
                 className="input"
-                style={{ width: '220px', paddingLeft: 38 }}
-                placeholder="Admin password"
+                style={{ width: '200px', height: '38px', paddingLeft: 34, fontSize: '0.8125rem' }}
+                placeholder="Confirm password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
             </div>
-            <button className="btn btn-primary" disabled={loading}>
-              {loading ? (<><Loader2 size={16} className="animate-spin" /> Loading</>) : 'Load Metrics'}
+            <button className="btn btn-secondary btn-sm" disabled={loading} style={{ height: '38px' }}>
+              {loading ? (<><Loader2 size={14} className="animate-spin" /> Syncing</>) : 'Sync Metrics'}
             </button>
           </form>
         </div>
@@ -166,9 +183,9 @@ export default function AdminPanel() {
             className="fade-in"
             role="alert"
             style={{
-              marginTop: '16px', padding: '10px 14px', borderRadius: 'var(--radius-md)',
+              marginTop: '16px', padding: '10px 12px', borderRadius: 'var(--radius-sm)',
               background: 'var(--error-tint)', border: '1px solid var(--error)',
-              fontSize: '0.8125rem', fontWeight: 500, color: 'var(--error)',
+              fontSize: '0.75rem', fontWeight: 500, color: 'var(--error)',
             }}
           >
             {error}
@@ -368,27 +385,66 @@ export default function AdminPanel() {
       )}
 
       {!metrics && !error && (
-        <div
-          className="card-elevated"
-          style={{ padding: '60px 32px', textAlign: 'center' }}
-        >
-          <div
-            className="mx-auto flex items-center justify-center float"
-            style={{
-              width: 64, height: 64, borderRadius: 'var(--radius-lg)',
-              background: 'var(--grad-primary)', color: '#fff',
-              boxShadow: 'var(--shadow-glow)',
-              marginBottom: '20px',
-            }}
-          >
-            <Lock size={28} />
+        <div className="flex flex-col items-center justify-center animate-fade-in" style={{ minHeight: '50vh', padding: '40px 16px' }}>
+          {/* Central Logo Above Card (Marketing & Clean UI) */}
+          <div className="flex flex-col items-center gap-2" style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                width: 44, height: 44, borderRadius: 'var(--radius-md)',
+                background: 'var(--grad-primary)', padding: 1.5,
+                boxShadow: 'var(--shadow-xs)',
+              }}
+            >
+              <div
+                style={{
+                  width: '100%', height: '100%', borderRadius: 'calc(var(--radius-md) - 1.5px)',
+                  background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  overflow: 'hidden',
+                }}
+              >
+                <img src={logo} alt="TechCart" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+              </div>
+            </div>
+            <span className="font-display" style={{ fontSize: '1rem', fontWeight: 700 }}>
+              TechCart Admin Center
+            </span>
           </div>
-          <h2 className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '8px' }}>
-            Enter the admin password
-          </h2>
-          <p className="text-muted" style={{ fontSize: '0.9375rem', maxWidth: '440px', margin: '0 auto' }}>
-            Authenticate to view routing quality, evaluation scores, token cost, and recent conversations.
-          </p>
+
+          <div
+            className="card"
+            style={{ width: '100%', maxWidth: '380px', padding: '28px 24px', background: 'var(--surface)', textAlign: 'center', boxShadow: 'var(--shadow-md)' }}
+          >
+            <div
+              className="mx-auto flex items-center justify-center"
+              style={{
+                width: 40, height: 40, borderRadius: '50%',
+                background: 'var(--primary-tint)', color: 'var(--primary)',
+                marginBottom: '16px',
+              }}
+            >
+              <Lock size={18} />
+            </div>
+            <h2 className="font-display" style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '6px' }}>
+              Authentication Required
+            </h2>
+            <p className="text-muted" style={{ fontSize: '0.8125rem', maxWidth: '300px', margin: '0 auto 20px' }}>
+              Enter the admin password to access metrics, traces, and pending approvals.
+            </p>
+            
+            <form onSubmit={loadMetrics} className="flex flex-col gap-3">
+              <input
+                type="password"
+                className="input"
+                style={{ height: '40px', fontSize: '0.875rem', textAlign: 'center' }}
+                placeholder="Enter password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+              <button className="btn btn-primary" style={{ width: '100%', height: '40px' }} disabled={loading}>
+                {loading ? (<><Loader2 size={15} className="animate-spin" /> Authenticating…</>) : 'Access Dashboard'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </section>
@@ -398,30 +454,23 @@ export default function AdminPanel() {
 function Metric({ label, value, icon, grad, delay = 0 }) {
   return (
     <div
-      className="card-elevated stagger-in"
+      className="card stagger-in animate-fade-in"
       style={{
-        padding: '20px', position: 'relative', overflow: 'hidden',
+        padding: '20px',
         animationDelay: `${delay}ms`,
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-xl)',
+        boxShadow: 'var(--shadow-xs)',
       }}
     >
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute', top: 0, right: 0,
-          width: 120, height: 120, borderRadius: '50%',
-          background: grad, opacity: 0.10,
-          filter: 'blur(40px)',
-          transform: 'translate(30%, -30%)',
-        }}
-      />
-      <div className="flex items-center justify-between" style={{ marginBottom: '14px', position: 'relative' }}>
-        <p className="eyebrow">{label}</p>
+      <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
+        <p className="eyebrow" style={{ fontSize: '0.6875rem' }}>{label}</p>
         <span
           style={{
-            width: 32, height: 32, borderRadius: 'var(--radius-sm)',
-            background: grad, color: '#fff',
+            width: 30, height: 30, borderRadius: 'var(--radius-md)',
+            background: 'var(--primary-tint)', color: 'var(--primary)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: 'var(--shadow-sm)',
           }}
         >
           {icon}
@@ -430,8 +479,8 @@ function Metric({ label, value, icon, grad, delay = 0 }) {
       <p
         className="font-display"
         style={{
-          fontSize: '2rem', fontWeight: 700, color: 'var(--text)',
-          letterSpacing: '-0.02em', position: 'relative',
+          fontSize: '1.75rem', fontWeight: 700, color: 'var(--text)',
+          letterSpacing: '-0.02em',
         }}
       >
         {value}

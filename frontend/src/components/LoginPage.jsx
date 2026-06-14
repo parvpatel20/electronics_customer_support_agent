@@ -59,157 +59,162 @@ export default function LoginPage({ onLogin }) {
   }
 
   return (
-    <section className="fade-in aurora" style={{ minHeight: 'calc(100vh - var(--nav-height))', position: 'relative' }}>
-      <div className="aurora-orbs" aria-hidden="true">
-        <span className="orb-cyan" />
-      </div>
-      <div className="grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.4, pointerEvents: 'none' }} aria-hidden="true" />
+    <section className="fade-in aurora animate-fade-in" style={{ minHeight: 'calc(100vh - var(--nav-height))', position: 'relative' }}>
+      <div className="grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none' }} aria-hidden="true" />
 
       <div
-        className="grid lg:grid-cols-[1.05fr_1fr] relative"
+        className="grid lg:grid-cols-[1.1fr_1fr] relative"
         style={{ minHeight: 'calc(100vh - var(--nav-height))', zIndex: 1 }}
       >
 
-        {/* ───────────── Brand / hero panel ───────────── */}
+        {/* ───────────── Brand / Hero Panel (Marketing) ───────────── */}
         <aside
           className="hidden lg:flex flex-col justify-between"
           style={{
-            padding: '56px 56px 48px', position: 'relative', overflow: 'hidden',
-            background: 'var(--bg-subtle)',
+            padding: '48px 48px 40px', position: 'relative', overflow: 'hidden',
+            background: 'var(--surface)',
             borderRight: '1px solid var(--border)',
           }}
         >
-          <div style={{ position: 'absolute', inset: 0, background: 'var(--grad-mesh-1), var(--grad-mesh-2)', pointerEvents: 'none' }} aria-hidden="true" />
-
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <div className="flex items-center gap-3" style={{ marginBottom: '56px' }}>
+            {/* Elegant Header with Logo */}
+            <div className="flex items-center gap-3" style={{ marginBottom: '48px' }}>
               <div
-                className="float"
                 style={{
-                  width: 44, height: 44, borderRadius: 'var(--radius-md)',
-                  background: 'var(--grad-primary)', padding: 2,
-                  boxShadow: 'var(--shadow-glow)',
+                  width: 38, height: 38, borderRadius: 'var(--radius-md)',
+                  background: 'var(--grad-primary)', padding: 1.5,
+                  boxShadow: 'var(--shadow-xs)',
                 }}
               >
                 <div
                   style={{
-                    width: '100%', height: '100%', borderRadius: 'calc(var(--radius-md) - 2px)',
+                    width: '100%', height: '100%', borderRadius: 'calc(var(--radius-md) - 1.5px)',
                     background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     overflow: 'hidden',
                   }}
                 >
-                  <img src={logo} alt="TechCart" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                  <img src={logo} alt="TechCart" style={{ width: 24, height: 24, objectFit: 'contain' }} />
                 </div>
               </div>
-              <span className="font-display" style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>
+              <span className="font-display" style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>
                 TechCart <span className="gradient-text">AI</span>
               </span>
             </div>
 
+            {/* AI Highlight Badge */}
             <div
               className="inline-flex items-center gap-1.5"
               style={{
-                padding: '6px 12px', borderRadius: 'var(--radius-full)',
+                padding: '6px 10px', borderRadius: 'var(--radius-sm)',
                 background: 'var(--primary-tint)', border: '1px solid var(--primary-border)',
                 color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600,
                 marginBottom: '20px',
               }}
             >
-              <Sparkles size={13} />
-              AI-Powered Electronics Support
+              <Sparkles size={12} className="text-primary" />
+              Smarter Support, Instant Resolutions
             </div>
+            
             <h1
               className="font-display"
-              style={{ fontSize: '2.75rem', fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.03em', maxWidth: '480px' }}
+              style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.15, letterSpacing: '-0.02em', color: 'var(--text)', maxWidth: '480px' }}
             >
               Support that
               <br />
-              <span className="gradient-text animate-gradient">actually resolves</span>
+              <span className="gradient-text">actually resolves</span>
               <br />
-              things.
+              your issues.
             </h1>
-            <p className="text-muted" style={{ marginTop: '20px', fontSize: '1.0625rem', lineHeight: 1.6, maxWidth: '460px' }}>
-              One intelligent thread for your whole account — routed to the right specialist agent, every time.
+            
+            <p className="text-muted" style={{ marginTop: '16px', fontSize: '0.9375rem', lineHeight: 1.5, maxWidth: '440px' }}>
+              Ask questions about your orders, invoices, or technical issues in one place. Our multi-agent AI automatically routes your thread to the right specialist.
             </p>
 
-            <div className="grid gap-4" style={{ marginTop: '40px', gridTemplateColumns: '1fr 1fr', maxWidth: '540px' }}>
+            {/* Clean Capability Showcase List */}
+            <div className="grid gap-3" style={{ marginTop: '36px', gridTemplateColumns: '1fr 1fr', maxWidth: '520px' }}>
               {features.map(({ label, desc, Icon }, i) => (
                 <div
                   key={label}
-                  className="card-glass stagger-in"
+                  className="stagger-in"
                   style={{
-                    padding: '16px 16px', display: 'flex', alignItems: 'flex-start', gap: '12px',
-                    animationDelay: `${i * 80}ms`,
+                    padding: '14px', display: 'flex', alignItems: 'flex-start', gap: '10px',
+                    animationDelay: `${i * 60}ms`,
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-md)',
                   }}
                 >
                   <span
                     style={{
-                      width: 38, height: 38, borderRadius: 'var(--radius-sm)', flexShrink: 0,
-                      background: 'var(--grad-primary)', color: '#fff',
+                      width: 28, height: 28, borderRadius: 'var(--radius-sm)', flexShrink: 0,
+                      background: 'var(--primary-tint)', color: 'var(--primary)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      boxShadow: 'var(--shadow-glow)',
                     }}
                   >
-                    <Icon size={18} />
+                    <Icon size={14} />
                   </span>
                   <span style={{ minWidth: 0 }}>
-                    <span style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', color: 'var(--text)' }}>{label}</span>
-                    <span className="text-subtle" style={{ display: 'block', fontSize: '0.75rem', lineHeight: 1.45, marginTop: '3px' }}>{desc}</span>
+                    <span style={{ display: 'block', fontWeight: 600, fontSize: '0.8125rem', color: 'var(--text)' }}>{label}</span>
+                    <span className="text-subtle" style={{ display: 'block', fontSize: '0.6875rem', lineHeight: 1.35, marginTop: '2px' }}>{desc}</span>
                   </span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-x-5 gap-y-2" style={{ position: 'relative', zIndex: 1, marginTop: '40px' }}>
+          {/* Clean Trust Points */}
+          <div className="flex flex-wrap gap-x-5 gap-y-2" style={{ position: 'relative', zIndex: 1, marginTop: '30px' }}>
             {trustPoints.map(({ label, Icon }) => (
-              <span key={label} className="flex items-center gap-2 text-subtle" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>
-                <Icon size={15} style={{ color: 'var(--accent)' }} /> {label}
+              <span key={label} className="flex items-center gap-1.5 text-subtle" style={{ fontSize: '0.75rem', fontWeight: 500 }}>
+                <Icon size={13} style={{ color: 'var(--primary)' }} /> {label}
               </span>
             ))}
           </div>
         </aside>
 
-        {/* ───────────── Form panel ───────────── */}
-        <div className="flex items-center justify-center" style={{ padding: '40px 24px' }}>
-          <div className="card-glass" style={{ width: '100%', maxWidth: '440px', padding: '36px 32px' }}>
-            {/* Compact brand header (mobile only) */}
-            <div className="flex lg:hidden items-center gap-3" style={{ marginBottom: '28px' }}>
+        {/* ───────────── Form Panel (Customer Login) ───────────── */}
+        <div className="flex flex-col items-center justify-center" style={{ padding: '40px 24px', background: 'var(--bg)' }}>
+          {/* Central Logo Above Card (Marketing & Clean UI) */}
+          <div className="flex flex-col items-center gap-2" style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                width: 50, height: 50, borderRadius: 'var(--radius-lg)',
+                background: 'var(--grad-primary)', padding: 2,
+                boxShadow: 'var(--shadow-xs)',
+              }}
+            >
               <div
                 style={{
-                  width: 40, height: 40, borderRadius: 'var(--radius-md)',
-                  background: 'var(--grad-primary)', padding: 2,
-                  boxShadow: 'var(--shadow-glow)',
+                  width: '100%', height: '100%', borderRadius: 'calc(var(--radius-lg) - 2px)',
+                  background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  overflow: 'hidden',
                 }}
               >
-                <div
-                  style={{
-                    width: '100%', height: '100%', borderRadius: 'calc(var(--radius-md) - 2px)',
-                    background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <img src={logo} alt="TechCart" style={{ width: 28, height: 28, objectFit: 'contain' }} />
-                </div>
+                <img src={logo} alt="TechCart Logo" style={{ width: 30, height: 30, objectFit: 'contain' }} />
               </div>
-              <span className="font-display" style={{ fontSize: '1.0625rem', fontWeight: 700 }}>TechCart AI</span>
             </div>
+            <span className="font-display" style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
+              TechCart Support
+            </span>
+          </div>
 
-            <h2 className="h1" style={{ fontSize: '1.75rem' }}>Welcome back</h2>
-            <p className="text-muted" style={{ marginTop: '8px', fontSize: '0.9375rem' }}>
-              Sign in to open your support thread — orders, billing, returns, and tech help in one place.
+          <div className="card" style={{ width: '100%', maxWidth: '420px', padding: '28px 28px', background: 'var(--surface)', boxShadow: 'var(--shadow-md)' }}>
+            <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)' }}>Sign In</h2>
+            <p className="text-muted" style={{ marginTop: '4px', fontSize: '0.8125rem' }}>
+              Enter your Customer ID to access your ongoing support thread.
             </p>
 
-            <form onSubmit={submit} style={{ marginTop: '28px' }}>
+            <form onSubmit={submit} style={{ marginTop: '20px' }}>
               <div style={{ marginBottom: '16px' }}>
-                <label htmlFor="login-identifier" className="field-label">Customer ID or email</label>
+                <label htmlFor="login-identifier" className="field-label" style={{ fontSize: '0.75rem' }}>Customer ID or Email</label>
                 <input
                   id="login-identifier"
                   className={`input${error ? ' input-error' : ''}`}
                   value={identifier}
                   onChange={(event) => setIdentifier(event.target.value)}
-                  placeholder="CUST-IN-001 or priya.sharma@email.com"
+                  placeholder="CUST-IN-001 or name@email.com"
                   disabled={loading}
+                  style={{ height: '42px', fontSize: '0.875rem' }}
                 />
               </div>
 
@@ -218,27 +223,28 @@ export default function LoginPage({ onLogin }) {
                   className="fade-in"
                   role="alert"
                   style={{
-                    marginBottom: '16px', padding: '10px 14px', borderRadius: 'var(--radius-md)',
+                    marginBottom: '16px', padding: '10px 12px', borderRadius: 'var(--radius-sm)',
                     background: 'var(--error-tint)', border: '1px solid var(--error)',
-                    fontSize: '0.8125rem', fontWeight: 500, color: 'var(--error)',
+                    fontSize: '0.75rem', fontWeight: 500, color: 'var(--error)',
                   }}
                 >
                   {error}
                 </div>
               )}
 
-              <button className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading || !identifier.trim()}>
-                {loading ? (<><Loader2 size={18} className="animate-spin" /> Signing in</>) : (<>Continue <ArrowRight size={18} /></>)}
+              <button className="btn btn-primary" style={{ width: '100%', height: '42px' }} disabled={loading || !identifier.trim()}>
+                {loading ? (<><Loader2 size={16} className="animate-spin" /> Signing in…</>) : (<>Sign In <ArrowRight size={16} /></>)}
               </button>
             </form>
 
-            {/* Demo accounts */}
-            <div style={{ marginTop: '28px' }}>
-              <div className="flex items-center gap-3" style={{ marginBottom: '14px' }}>
-                <span className="eyebrow" style={{ whiteSpace: 'nowrap' }}>Quick access — demo</span>
+            {/* Redesigned Compact Quick Access Selector */}
+            <div style={{ marginTop: '24px' }}>
+              <div className="flex items-center gap-3" style={{ marginBottom: '12px' }}>
+                <span className="eyebrow" style={{ whiteSpace: 'nowrap', fontSize: '0.625rem' }}>Quick access Demo Accounts</span>
                 <span style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
               </div>
-              <div className="flex flex-col gap-2">
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {demoCustomers.map(({ name, id, note, Icon, grad }) => {
                   const active = identifier === id;
                   return (
@@ -247,35 +253,30 @@ export default function LoginPage({ onLogin }) {
                       type="button"
                       onClick={() => setIdentifier(id)}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: '12px',
-                        padding: '10px 12px', cursor: 'pointer', textAlign: 'left', width: '100%',
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '8px 10px', cursor: 'pointer', textAlign: 'left', width: '100%',
                         background: active ? 'var(--primary-tint)' : 'var(--surface)',
                         border: active ? '1.5px solid var(--primary-border)' : '1px solid var(--border)',
                         borderRadius: 'var(--radius-md)',
-                        transition: 'all 180ms ease',
+                        transition: 'all 150ms ease',
                       }}
-                      onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = 'var(--border-strong)'; }}
-                      onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = 'var(--border)'; }}
                     >
                       <span
                         className="avatar-gradient"
-                        style={{ background: grad, width: 36, height: 36 }}
+                        style={{ background: grad, width: 24, height: 24, borderRadius: '50%', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                       >
-                        <Icon size={17} />
+                        <Icon size={11} />
                       </span>
                       <span style={{ minWidth: 0, flex: 1 }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--text)' }}>{name}</span>
-                          <span className="text-mono" style={{ fontSize: '0.6875rem', color: 'var(--primary)', fontWeight: 500 }}>{id}</span>
-                        </span>
-                        <span className="text-subtle" style={{ display: 'block', fontSize: '0.6875rem' }}>{note}</span>
+                        <span style={{ display: 'block', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+                        <span className="text-mono" style={{ display: 'block', fontSize: '0.625rem', color: 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{id}</span>
                       </span>
                       {active && (
                         <span
                           className="flex items-center justify-center"
-                          style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--primary)', color: '#fff', flexShrink: 0 }}
+                          style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--primary)', color: '#fff', flexShrink: 0 }}
                         >
-                          <Check size={12} strokeWidth={3} />
+                          <Check size={9} strokeWidth={3.5} />
                         </span>
                       )}
                     </button>
