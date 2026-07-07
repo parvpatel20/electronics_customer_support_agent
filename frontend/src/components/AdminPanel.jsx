@@ -1,10 +1,35 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  Shuffle, Star, MessagesSquare, DollarSign, ExternalLink, Loader2, Inbox,
-  TrendingUp, Activity, ShieldCheck, Lock,
+  Shuffle, Star, MessagesSquare, DollarSign, Loader2, Inbox,
+  TrendingUp, Activity, ShieldCheck, Lock, LogOut,
 } from 'lucide-react';
 import { API_BASE } from '../api.js';
 import logo from '../assets/techcart-logo.png';
+
+const ADMIN_AUTH_KEY = 'techcart_admin_auth';
+
+function loadStoredToken() {
+  try {
+    const raw = localStorage.getItem(ADMIN_AUTH_KEY);
+    if (!raw) return '';
+    const { token, expiresAt } = JSON.parse(raw);
+    if (!token || !expiresAt || Date.now() > expiresAt * 1000) {
+      localStorage.removeItem(ADMIN_AUTH_KEY);
+      return '';
+    }
+    return token;
+  } catch {
+    return '';
+  }
+}
+
+function storeToken(token, expiresAt) {
+  localStorage.setItem(ADMIN_AUTH_KEY, JSON.stringify({ token, expiresAt }));
+}
+
+function clearStoredToken() {
+  localStorage.removeItem(ADMIN_AUTH_KEY);
+}
 
 function scoreColor(val) {
   if (!val || val === '—') return {};
@@ -14,9 +39,20 @@ function scoreColor(val) {
   return { color: 'var(--error)' };
 }
 
-function PendingApproval({ approval, adminPassword, onDone }) {
+function SummaryRow({ label, value }) {
+  if (value === null || value === undefined || value === '') return null;
+  return (
+    <div className="flex items-center justify-between" style={{ fontSize: '0.75rem', padding: '2px 0' }}>
+      <span className="text-subtle">{label}</span>
+      <span style={{ color: 'var(--text)', fontWeight: 600, textAlign: 'right' }}>{value}</span>
+    </div>
+  );
+}
+
+function PendingApproval({ approval, adminToken, onDone }) {
   const [acting, setActing] = useState(false);
   const [result, setResult] = useState('');
+  const summary = approval.refund_summary;
 
   async function decide(decision) {
     if (acting) return;
@@ -24,11 +60,11 @@ function PendingApproval({ approval, adminPassword, onDone }) {
     try {
       const res = await fetch(`${API_BASE}/admin/approve-refund/${approval.conversation_id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Password': adminPassword },
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken },
         body: JSON.stringify({ decision }),
       });
       if (!res.ok) {
-        setResult('Failed. Check password or retry.');
+        setResult('Failed. Session may have expired — try logging in again.');
       } else {
         setResult(decision === 'approve' ? 'Approved.' : 'Rejected.');
         setTimeout(onDone, 800);
@@ -50,9 +86,29 @@ function PendingApproval({ approval, adminPassword, onDone }) {
       <p className="text-subtle" style={{ fontSize: '0.75rem', marginBottom: '6px' }}>
         Customer: <span className="text-mono" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{approval.customer_id}</span>
       </p>
-      <p style={{ fontSize: '0.8125rem', color: 'var(--text)', lineHeight: 1.5, marginBottom: '12px' }}>
+      <p style={{ fontSize: '0.8125rem', color: 'var(--text)', lineHeight: 1.5, marginBottom: summary ? '8px' : '12px' }}>
         {approval.description}
       </p>
+      {summary && (
+        <div
+          style={{
+            padding: '8px 10px', borderRadius: 'var(--radius-sm)',
+            background: 'var(--surface)', border: '1px solid var(--border)',
+            marginBottom: '12px',
+          }}
+        >
+          <SummaryRow label="Order" value={summary.order_id} />
+          <SummaryRow label="Product" value={summary.product_name} />
+          <SummaryRow label="Order status" value={summary.order_status} />
+          <SummaryRow label="Customer" value={summary.customer_name} />
+          <SummaryRow label="Amount" value={summary.amount != null ? `₹${summary.amount}` : null} />
+          <SummaryRow label="Reason" value={summary.reason} />
+          <SummaryRow
+            label="Requested"
+            value={approval.requested_at ? new Date(approval.requested_at).toLocaleString() : null}
+          />
+        </div>
+      )}
       {result ? (
         <p
           className="flex items-center gap-1.5"
@@ -86,18 +142,18 @@ const metricGradients = {
 
 export default function AdminPanel() {
   const [password, setPassword] = useState('');
+  const [token, setToken] = useState('');
   const [metrics, setMetrics] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function loadMetrics(event) {
-    event?.preventDefault();
+  async function loadMetrics(activeToken) {
     setError('');
     setLoading(true);
     let response;
     try {
       response = await fetch(`${API_BASE}/admin/metrics`, {
-        headers: { 'X-Admin-Password': password },
+        headers: { 'X-Admin-Token': activeToken },
       });
     } catch {
       setLoading(false);
@@ -106,10 +162,57 @@ export default function AdminPanel() {
     }
     setLoading(false);
     if (!response.ok) {
-      setError('Admin password rejected.');
+      clearStoredToken();
+      setToken('');
+      setMetrics(null);
+      setError('Session expired or invalid. Please log in again.');
       return;
     }
     setMetrics(await response.json());
+  }
+
+  async function login(event) {
+    event?.preventDefault();
+    setError('');
+    setLoading(true);
+    let response;
+    try {
+      response = await fetch(`${API_BASE}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+    } catch {
+      setLoading(false);
+      setError('Cannot reach the backend. Please make sure the API is running.');
+      return;
+    }
+    if (!response.ok) {
+      setLoading(false);
+      setError('Admin password rejected.');
+      return;
+    }
+    const { token: newToken, expires_at } = await response.json();
+    storeToken(newToken, expires_at);
+    setToken(newToken);
+    setPassword('');
+    await loadMetrics(newToken);
+  }
+
+  useEffect(() => {
+    const stored = loadStoredToken();
+    if (stored) {
+      setToken(stored);
+      loadMetrics(stored);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function logout() {
+    clearStoredToken();
+    setToken('');
+    setMetrics(null);
+    setError('');
   }
 
   return (
@@ -139,14 +242,25 @@ export default function AdminPanel() {
             </h1>
           </div>
 
-          <button
-            className="btn btn-secondary btn-sm"
-            disabled={loading}
-            style={{ height: '38px' }}
-            onClick={() => loadMetrics()}
-          >
-            {loading ? (<><Loader2 size={14} className="animate-spin" /> Syncing…</>) : 'Sync Metrics'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              className="btn btn-secondary btn-sm"
+              disabled={loading}
+              style={{ height: '38px' }}
+              onClick={() => loadMetrics(token)}
+            >
+              {loading ? (<><Loader2 size={14} className="animate-spin" /> Syncing…</>) : 'Sync Metrics'}
+            </button>
+            {metrics && (
+              <button
+                className="btn btn-secondary btn-sm"
+                style={{ height: '38px' }}
+                onClick={logout}
+              >
+                <LogOut size={14} /> Logout
+              </button>
+            )}
+          </div>
         </div>
 
         {error && (
@@ -288,33 +402,6 @@ export default function AdminPanel() {
 
               <aside className="flex flex-col gap-4" style={{ marginTop: '20px' }}>
                 <div className="card" style={{ padding: '20px' }}>
-                  <div className="flex items-center gap-2" style={{ marginBottom: '8px' }}>
-                    <span
-                      style={{
-                        width: 32, height: 32, borderRadius: 'var(--radius-sm)',
-                        background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                        color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >
-                      <Activity size={15} />
-                    </span>
-                    <h2 className="h4" style={{ fontFamily: 'var(--font-display)' }}>Phoenix Traces</h2>
-                  </div>
-                  <p className="text-muted" style={{ fontSize: '0.8125rem', lineHeight: 1.5 }}>
-                    Trace UI for observability and debugging.
-                  </p>
-                  <a
-                    className="btn btn-secondary btn-sm"
-                    style={{ marginTop: '14px', textDecoration: 'none' }}
-                    href="http://localhost:6006"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Open Phoenix <ExternalLink size={14} />
-                  </a>
-                </div>
-
-                <div className="card" style={{ padding: '20px' }}>
                   <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
                     <div className="flex items-center gap-2">
                       <span
@@ -338,8 +425,8 @@ export default function AdminPanel() {
                         <PendingApproval
                           key={approval.conversation_id}
                           approval={approval}
-                          adminPassword={password}
-                          onDone={loadMetrics}
+                          adminToken={token}
+                          onDone={() => loadMetrics(token)}
                         />
                       ))}
                     </div>
@@ -355,7 +442,7 @@ export default function AdminPanel() {
         </>
       )}
 
-      {!metrics && !error && (
+      {!metrics && (
         <div className="flex flex-col items-center justify-center animate-fade-in" style={{ minHeight: '50vh', padding: '40px 16px' }}>
           {/* Central Logo Above Card (Marketing & Clean UI) */}
           <div style={{ height: '24px' }} />
@@ -378,10 +465,10 @@ export default function AdminPanel() {
               Authentication Required
             </h2>
             <p className="text-muted" style={{ fontSize: '0.8125rem', maxWidth: '300px', margin: '0 auto 20px' }}>
-              Enter the admin password to access metrics, traces, and pending approvals.
+              Enter the admin password to access metrics and pending approvals.
             </p>
             
-            <form onSubmit={loadMetrics} className="flex flex-col gap-3">
+            <form onSubmit={login} className="flex flex-col gap-3">
               <input
                 type="password"
                 className="input"

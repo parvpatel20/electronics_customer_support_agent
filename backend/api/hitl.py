@@ -9,19 +9,25 @@ def format_hitl_payload(value: Any) -> dict[str, Any] | None:
 
     action_requests = value.get("action_requests") or []
     descriptions: list[str] = []
+    refund_summary: dict[str, Any] | None = None
     for action in action_requests:
         if not isinstance(action, dict):
             continue
         description = action.get("description") or ""
         name = action.get("name") or "action"
         args = action.get("args") or {}
-        if description:
-            descriptions.append(description)
-        elif name == "process_refund":
+        if name == "process_refund":
             order_id = args.get("order_id", "the order")
             amount = args.get("amount")
             amount_text = f" ₹{amount}" if amount is not None else ""
             descriptions.append(f"Approve refund{amount_text} for order {order_id}?")
+            refund_summary = {
+                "order_id": args.get("order_id"),
+                "amount": amount,
+                "reason": args.get("reason"),
+            }
+        elif description:
+            descriptions.append(description)
         else:
             descriptions.append(f"Approve {name}?")
 
@@ -31,11 +37,14 @@ def format_hitl_payload(value: Any) -> dict[str, Any] | None:
     if not descriptions:
         return None
 
-    return {
+    payload: dict[str, Any] = {
         "description": " ".join(descriptions),
         "options": ["approve", "reject"],
         "action_requests": action_requests,
     }
+    if refund_summary:
+        payload["refund_summary"] = refund_summary
+    return payload
 
 
 def hitl_from_graph_state(graph_state) -> dict[str, Any] | None:

@@ -5,13 +5,21 @@ import json
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import AIMessage
 from langgraph.types import Command
 from pydantic import BaseModel, Field
 
+from backend.api.admin_auth import (
+    check_login_rate_limit,
+    clear_login_failures,
+    issue_admin_token,
+    record_login_failure,
+    verify_admin_password,
+    verify_admin_token,
+)
 from backend.api.hitl import hitl_from_graph_state
 from backend.config import settings
 from backend.db.mysql_client import execute_query, fetch_all, fetch_one, ping
@@ -63,10 +71,8 @@ class ApprovalRequest(BaseModel):
     reason: str | None = None
 
 
-class ChatApprovalRequest(BaseModel):
-    customer_id: str = Field(min_length=1, max_length=64)
-    decision: str = Field(pattern=r"^(approve|reject)$")
-    reason: str | None = None
+class AdminLoginRequest(BaseModel):
+    password: str = Field(min_length=1, max_length=255)
 
 
 def _sse(event: str, data: dict) -> str:
@@ -149,9 +155,9 @@ def _save_message(conversation_id: str, role: str, content: str, agent_name: str
         logger.debug("trim_stored_messages failed for %s: %s", conversation_id, exc)
 
 
-def _auth_admin(admin_password: str | None) -> None:
-    if settings.ADMIN_PASSWORD and admin_password != settings.ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="Invalid admin password")
+def _auth_admin(admin_token: str | None) -> None:
+    if settings.ADMIN_PASSWORD and not verify_admin_token(admin_token):
+        raise HTTPException(status_code=401, detail="Invalid or expired admin session")
 
 
 async def _run_judge_background(
@@ -215,7 +221,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> Strea
             )
             yield _sse("metadata", {"conversation_id": conversation_id})
             yield _sse("content", {"agent_name": "supervisor", "content": fallback})
-            yield _sse("error", {"message": str(exc), "conversation_id": conversation_id})
+            yield _sse("error", {"message": "Support backend error. Please retry.", "conversation_id": conversation_id})
             yield _sse("done", {"conversation_id": conversation_id, "agent_name": "supervisor"})
 
         return StreamingResponse(startup_error_stream(), media_type="text/event-stream")
@@ -329,44 +335,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> Strea
                 )
             _save_message(conversation_id, "assistant", fallback, "supervisor")
             yield _sse("content", {"agent_name": "supervisor", "content": fallback})
-            yield _sse("error", {"message": raw_error, "conversation_id": conversation_id})
+            yield _sse("error", {"message": fallback, "conversation_id": conversation_id})
             yield _sse("done", {"conversation_id": conversation_id, "agent_name": "supervisor"})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
-
-
-@app.post("/chat/approve")
-async def chat_approve(request: ChatApprovalRequest, background_tasks: BackgroundTasks) -> StreamingResponse:
-    conversation_id = _ensure_customer_conversation(request.customer_id)
-    config = _graph_config(conversation_id)
-    decision = {"type": request.decision}
-    if request.reason:
-        decision["message"] = request.reason
-
-    async def approval_stream():
-        yield _sse("metadata", {"conversation_id": conversation_id})
-        try:
-            result = await techcart_graph.ainvoke(
-                Command(resume={"decisions": [decision]}),
-                config=config,
-            )
-            messages = result.get("messages", [])
-            final = next((m.content for m in reversed(messages) if isinstance(m, AIMessage)), "")
-            if final:
-                _save_message(conversation_id, "assistant", final, "billing")
-                background_tasks.add_task(
-                    _run_judge_background, conversation_id, f"hitl:{request.decision}", "billing", final
-                )
-                yield _sse("content", {"agent_name": "billing", "content": final})
-            yield _sse("done", {"conversation_id": conversation_id, "agent_name": "billing"})
-        except Exception as exc:
-            logger.exception("Approval flow failed for conversation %s", conversation_id)
-            fallback = "There was an issue processing the approval. Please try again."
-            yield _sse("content", {"agent_name": "supervisor", "content": fallback})
-            yield _sse("error", {"message": str(exc), "conversation_id": conversation_id})
-            yield _sse("done", {"conversation_id": conversation_id, "agent_name": "supervisor"})
-
-    return StreamingResponse(approval_stream(), media_type="text/event-stream")
 
 
 @app.get("/customers/{customer_id}/support")
@@ -389,9 +361,21 @@ async def customer_support(customer_id: str) -> dict:
     }
 
 
+@app.post("/admin/login")
+async def admin_login(body: AdminLoginRequest, request: Request) -> dict:
+    client_key = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "unknown")
+    check_login_rate_limit(client_key)
+    if settings.ADMIN_PASSWORD and not verify_admin_password(body.password):
+        record_login_failure(client_key)
+        raise HTTPException(status_code=401, detail="Invalid admin password")
+    clear_login_failures(client_key)
+    token, expires_at = issue_admin_token()
+    return {"token": token, "expires_at": expires_at}
+
+
 @app.get("/admin/metrics")
-async def admin_metrics(x_admin_password: str | None = Header(default=None)) -> dict:
-    _auth_admin(x_admin_password)
+async def admin_metrics(x_admin_token: str | None = Header(default=None)) -> dict:
+    _auth_admin(x_admin_token)
     totals = fetch_one(
         """
         SELECT
@@ -429,20 +413,41 @@ async def admin_metrics(x_admin_password: str | None = Header(default=None)) -> 
         """
     )
     pending_approvals = []
+    seen_conv_ids: set[str] = set()
     for row in (recent or []):
         conv_id = row.get("conversation_id")
-        if not conv_id:
+        if not conv_id or conv_id in seen_conv_ids:
             continue
+        seen_conv_ids.add(conv_id)
         try:
             graph_state = await techcart_graph.aget_state({"configurable": {"thread_id": conv_id}, "recursion_limit": settings.GRAPH_RECURSION_LIMIT})
             hitl = hitl_from_graph_state(graph_state)
             if hitl:
-                pending_approvals.append({
+                approval = {
                     "conversation_id": conv_id,
                     "customer_id": row.get("customer_id"),
                     "description": hitl["description"],
                     "options": hitl.get("options", ["approve", "reject"]),
-                })
+                    "requested_at": row.get("started_at"),
+                }
+                refund_summary = hitl.get("refund_summary")
+                if refund_summary and refund_summary.get("order_id"):
+                    order = fetch_one(
+                        """
+                        SELECT o.order_id, o.product_name, o.status AS order_status, o.price,
+                               c.name AS customer_name
+                        FROM orders o JOIN customers c ON c.customer_id = o.customer_id
+                        WHERE o.order_id = %s
+                        """,
+                        (refund_summary["order_id"],),
+                    )
+                    approval["refund_summary"] = {
+                        **refund_summary,
+                        "product_name": order.get("product_name") if order else None,
+                        "order_status": order.get("order_status") if order else None,
+                        "customer_name": order.get("customer_name") if order else None,
+                    }
+                pending_approvals.append(approval)
         except Exception:
             pass
 
@@ -459,9 +464,9 @@ async def admin_metrics(x_admin_password: str | None = Header(default=None)) -> 
 async def approve_refund(
     conversation_id: str,
     body: ApprovalRequest,
-    x_admin_password: str | None = Header(default=None),
+    x_admin_token: str | None = Header(default=None),
 ) -> dict:
-    _auth_admin(x_admin_password)
+    _auth_admin(x_admin_token)
     decision = {"type": body.decision}
     if body.reason:
         decision["message"] = body.reason
@@ -477,8 +482,8 @@ async def approve_refund(
 
 
 @app.get("/admin/traces")
-async def admin_traces(x_admin_password: str | None = Header(default=None)) -> dict:
-    _auth_admin(x_admin_password)
+async def admin_traces(x_admin_token: str | None = Header(default=None)) -> dict:
+    _auth_admin(x_admin_token)
     return {"phoenix_url": settings.PHOENIX_BASE_URL, "project_name": settings.PHOENIX_PROJECT_NAME}
 
 
